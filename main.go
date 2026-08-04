@@ -98,6 +98,21 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Cloud Aiven!")
 
+	// Otomatis buat tabel users jika belum ada
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			username VARCHAR(50) NOT NULL UNIQUE,
+			password VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		log.Println("Gagal membuat tabel users:", err)
+	} else {
+		log.Println("Tabel users siap digunakan!")
+	}
+
 	// TAMPILKAN FILE HTML KE INTERNET
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
