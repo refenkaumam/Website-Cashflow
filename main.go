@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 )
 
 type Transaction struct {
@@ -72,7 +73,12 @@ type PayBillRequest struct {
 var db *sql.DB
 
 func main() {
-	// Ambil koneksi database dari Environment Variable (Render.com / Aiven)
+	// Daftarkan custom TLS config untuk mengatasi error x509 certificate di Cloud
+	mysql.RegisterTLSConfig("custom", &tls.Config{
+		InsecureSkipVerify: true,
+	})
+
+	// Ambil koneksi database dari Environment Variable (Railway / Aiven)
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL belum diset di environment variable!")
@@ -106,7 +112,7 @@ func main() {
 	http.HandleFunc("/api/piutang", handlePiutang)
 	http.HandleFunc("/api/piutang/delete", handleDeletePiutang)
 
-	// Ambil Port dari Environment (Untuk Render.com)
+	// Ambil Port dari Environment (Untuk Railway)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
