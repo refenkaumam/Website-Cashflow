@@ -16,13 +16,10 @@ Aplikasi web manajemen keuangan pribadi (Cashflow) berbasis **Golang (Go)** dan 
 ## 📸 Preview Tampilan Aplikasi
 
 ### 1. Halaman Login / Registrasi
-![Preview Login](login.png)
+![Preview Login](./Preview-login_cashflow.png)
 
 ### 2. Halaman Dashboard Utama
-![Preview Dashboard](dashboard.png)
-
-*(Catatan: Pastikan file gambar screenshot kamu di dalam folder project bernama `login.png` dan `dashboard.png`, atau sesuaikan dengan nama file gambarmu).*
-
+![Preview Dashboard](./Preview-dashboard-cashflow.png)
 ---
 
 ## 🛠️ Teknologi yang Digunakan
