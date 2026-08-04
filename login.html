@@ -64,6 +64,8 @@
 
                 if (response.ok) {
                     if (isLogin) {
+                        // Simpan username ke browser sebelum masuk ke dashboard
+                        localStorage.setItem('cashflow_username', username);
                         window.location.href = '/dashboard';
                     } else {
                         succDiv.innerText = 'Registrasi berhasil! Silakan login.';
