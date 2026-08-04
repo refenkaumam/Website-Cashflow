@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/go-sql-driver/mysql"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Transaction struct {
@@ -70,15 +71,18 @@ type PayBillRequest struct {
 	PaidAmount float64 `json:"paid_amount"`
 }
 
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 var db *sql.DB
 
 func main() {
-	// Daftarkan custom TLS config untuk mengatasi error x509 certificate di Cloud
 	mysql.RegisterTLSConfig("custom", &tls.Config{
 		InsecureSkipVerify: true,
 	})
 
-	// Ambil koneksi database dari Environment Variable (Railway / Aiven)
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL belum diset di environment variable!")
@@ -91,7 +95,6 @@ func main() {
 	}
 	defer db.Close()
 
-	// Tes koneksi untuk memastikan berhasil
 	err = db.Ping()
 	if err != nil {
 		log.Fatal("Database tidak bisa di-ping:", err)
@@ -113,11 +116,20 @@ func main() {
 		log.Println("Tabel users siap digunakan!")
 	}
 
-	// TAMPILKAN FILE HTML KE INTERNET
+	// ROUTING HALAMAN & API
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		http.ServeFile(w, r, "login.html") // Halaman awal sekarang diarahkan ke Login/Register
 	})
 
+	http.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html") // Dashboard utama aplikasi cashflow
+	})
+
+	// Endpoint Auth
+	http.HandleFunc("/api/register", handleRegister)
+	http.HandleFunc("/api/login", handleLogin)
+
+	// Endpoint Aplikasi Cashflow
 	http.HandleFunc("/api/transaction", handleTransaction)
 	http.HandleFunc("/api/transaction/delete", handleDeleteTransaction)
 	http.HandleFunc("/api/history", handleHistory)
@@ -127,7 +139,6 @@ func main() {
 	http.HandleFunc("/api/piutang", handlePiutang)
 	http.HandleFunc("/api/piutang/delete", handleDeletePiutang)
 
-	// Ambil Port dari Environment (Untuk Railway)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -137,19 +148,77 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func handleTransaction(w http.ResponseWriter, r *http.Request) {
+// Handler Register
+func handleRegister(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	if r.Method == http.MethodOptions {
 		return
 	}
 
+	var u User
+	json.NewDecoder(r.Body).Decode(&u)
+
+	if u.Username == "" || u.Password == "" {
+		http.Error(w, "Username dan password tidak boleh kosong", http.StatusBadRequest)
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Gagal mengenkripsi password", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", u.Username, string(hashedPassword))
+	if err != nil {
+		http.Error(w, "Username sudah digunakan", http.StatusConflict)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Registrasi berhasil"})
+}
+
+// Handler Login
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	var u User
+	json.NewDecoder(r.Body).Decode(&u)
+
+	var storedPassword string
+	err := db.QueryRow("SELECT password FROM users WHERE username = ?", u.Username).Scan(&storedPassword)
+	if err != nil {
+		http.Error(w, "Username atau password salah", http.StatusUnauthorized)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(u.Password))
+	if err != nil {
+		http.Error(w, "Username atau password salah", http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Login berhasil"})
+}
+
+// --- Handler Cashflow Lainnya ---
+func handleTransaction(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == http.MethodOptions {
+		return
+	}
 	var t Transaction
 	json.NewDecoder(r.Body).Decode(&t)
 	tx, _ := db.Begin()
-
 	tx.Exec(`INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description) VALUES (?, ?, ?, ?, ?)`, t.AccountID, t.Type, t.Amount, t.AdminFee, t.Desc)
-
 	if t.Type == "INCOME" {
 		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ?", t.Amount, t.AccountID)
 	} else if t.Type == "EXPENSE" {
@@ -170,7 +239,6 @@ func handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
 		return
 	}
-
 	idStr := r.URL.Query().Get("id")
 	tx, _ := db.Begin()
 	var accID int
@@ -195,11 +263,9 @@ func handleBill(w http.ResponseWriter, r *http.Request) {
 	}
 	var b Bill
 	json.NewDecoder(r.Body).Decode(&b)
-
 	if b.Tenor > 0 {
 		b.MonthlyAmount = b.TotalAmount / float64(b.Tenor)
 	}
-
 	db.Exec("INSERT INTO bills (platform, item_name, monthly_amount, tenor, total_amount) VALUES (?, ?, ?, ?, ?)", b.Platform, b.ItemName, b.MonthlyAmount, b.Tenor, b.TotalAmount)
 	w.WriteHeader(http.StatusCreated)
 }
@@ -220,11 +286,9 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
 		return
 	}
-
 	var req PayBillRequest
 	json.NewDecoder(r.Body).Decode(&req)
 	tx, _ := db.Begin()
-
 	var platform, itemName string
 	var currentTotal float64
 	var tenor int
@@ -234,11 +298,9 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not found", 404)
 		return
 	}
-
 	desc := fmt.Sprintf("Cicilan %s - %s", platform, itemName)
 	tx.Exec("INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description) VALUES (?, 'EXPENSE', ?, 0, ?)", req.AccountID, req.PaidAmount, desc)
 	tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ?", req.PaidAmount, req.AccountID)
-
 	newTotal := currentTotal - req.PaidAmount
 	newTenor := tenor - 1
 	if newTenor <= 0 || newTotal <= 0 {
@@ -247,7 +309,6 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 		newMonthly := newTotal / float64(newTenor)
 		tx.Exec("UPDATE bills SET tenor = ?, total_amount = ?, monthly_amount = ? WHERE id = ?", newTenor, newTotal, newMonthly, req.BillID)
 	}
-
 	tx.Commit()
 	w.WriteHeader(http.StatusOK)
 }
