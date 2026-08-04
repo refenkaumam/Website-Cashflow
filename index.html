@@ -46,6 +46,48 @@
             </div>
         </div>
 
+        <!-- Bagian Input Transaksi Baru -->
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-8">
+            <h3 class="text-lg font-semibold mb-4 text-cyan-400">Tambah Transaksi Baru</h3>
+            <form id="transaction-form" onsubmit="submitTransaction(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-xs mb-1">Jenis Transaksi</label>
+                    <select id="tx-type" onchange="toggleTargetAccount()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+                        <option value="INCOME">Pemasukan (Income)</option>
+                        <option value="EXPENSE">Pengeluaran (Expense)</option>
+                        <option value="TRANSFER">Transfer Antar Akun</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs mb-1">Dari Akun / Dompet</label>
+                    <select id="tx-account" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+                        <!-- Diisi otomatis via JavaScript -->
+                    </select>
+                </div>
+                <div id="target-account-wrapper" class="hidden">
+                    <label class="block text-slate-400 text-xs mb-1">Ke Akun Tujuan</label>
+                    <select id="tx-target-account" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+                        <!-- Diisi otomatis via JavaScript -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs mb-1">Jumlah (Rp)</label>
+                    <input type="number" id="tx-amount" required placeholder="Contoh: 50000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs mb-1">Biaya Admin (Opsional)</label>
+                    <input type="number" id="tx-admin" value="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-slate-400 text-xs mb-1">Keterangan / Deskripsi</label>
+                    <input type="text" id="tx-desc" required placeholder="Contoh: Makan siang / Gaji bulanan" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold py-2 rounded-xl text-sm transition">Simpan Transaksi</button>
+                </div>
+            </form>
+        </div>
+
         <!-- Bagian Tabel & Data -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Riwayat Transaksi -->
@@ -90,18 +132,27 @@
             "“Masa depan yang cerah dibangun dari keputusan finansial yang bijak hari ini.”"
         ];
 
-        // Ambil nama user dari localStorage yang disimpan saat login
         const currentUsername = localStorage.getItem('cashflow_username') || 'Sobat Finansial';
         document.getElementById('welcome-user').innerText = `Halo, ${currentUsername}! 👋`;
 
-        // Pilih motivasi secara acak
         const randomMotivation = motivations[Math.floor(Math.random() * motivations.length)];
         document.getElementById('ai-motivation').innerText = randomMotivation;
 
-        // Fungsi Logout
         function logout() {
             localStorage.removeItem('cashflow_username');
             window.location.href = '/';
+        }
+
+        let globalAccounts = [];
+
+        function toggleTargetAccount() {
+            const type = document.getElementById('tx-type').value;
+            const targetWrapper = document.getElementById('target-account-wrapper');
+            if (type === 'TRANSFER') {
+                targetWrapper.classList.remove('hidden');
+            } else {
+                targetWrapper.classList.add('hidden');
+            }
         }
 
         // Ambil data dashboard dari API Backend Go
@@ -115,19 +166,30 @@
                 document.getElementById('total-bill').innerText = `Rp ${data.total_bill.toLocaleString('id-ID')}`;
                 document.getElementById('total-piutang').innerText = `Rp ${data.total_piutang.toLocaleString('id-ID')}`;
 
-                // Render Akun
+                globalAccounts = data.balances || [];
+
+                // Render Pilihan Dropdown Akun
+                const accSelect = document.getElementById('tx-account');
+                const targetAccSelect = document.getElementById('tx-target-account');
+                accSelect.innerHTML = '';
+                targetAccSelect.innerHTML = '';
+
+                globalAccounts.forEach(acc => {
+                    accSelect.innerHTML += `<option value="${acc.id}">${acc.bank_name} (Rp ${acc.balance.toLocaleString('id-ID')})</option>`;
+                    targetAccSelect.innerHTML += `<option value="${acc.id}">${acc.bank_name}</option>`;
+                });
+
+                // Render Akun List
                 const accContainer = document.getElementById('accounts-list');
                 accContainer.innerHTML = '';
-                if (data.balances) {
-                    data.balances.forEach(acc => {
-                        accContainer.innerHTML += `
-                            <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-700/50">
-                                <span class="font-medium">${acc.bank_name}</span>
-                                <span class="text-cyan-400 font-bold">Rp ${acc.balance.toLocaleString('id-ID')}</span>
-                            </div>
-                        `;
-                    });
-                }
+                globalAccounts.forEach(acc => {
+                    accContainer.innerHTML += `
+                        <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-700/50">
+                            <span class="font-medium">${acc.bank_name}</span>
+                            <span class="text-cyan-400 font-bold">Rp ${acc.balance.toLocaleString('id-ID')}</span>
+                        </div>
+                    `;
+                });
 
                 // Render Transaksi
                 const txTable = document.getElementById('transaction-table');
@@ -150,6 +212,53 @@
                 }
             } catch (err) {
                 console.error('Gagal memuat data dashboard:', err);
+            }
+        }
+
+        // Kirim Transaksi Baru ke Backend
+        async function submitTransaction(e) {
+            e.preventDefault();
+            const type = document.getElementById('tx-type').value;
+            const account_id = parseInt(document.getElementById('tx-account').value);
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const admin_fee = parseFloat(document.getElementById('tx-admin').value) || 0;
+            const description = document.getElementById('tx-desc').value;
+
+            let target_account_id = null;
+            if (type === 'TRANSFER') {
+                target_account_id = parseInt(document.getElementById('tx-target-account').value);
+                if (account_id === target_account_id) {
+                    alert('Akun asal dan tujuan transfer tidak boleh sama!');
+                    return;
+                }
+            }
+
+            const payload = {
+                account_id,
+                target_account_id,
+                transaction_type: type,
+                amount,
+                admin_fee,
+                description
+            };
+
+            try {
+                const res = await fetch('/api/transaction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    document.getElementById('transaction-form').reset();
+                    toggleTargetAccount();
+                    loadDashboard();
+                } else {
+                    alert('Gagal menyimpan transaksi.');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Terjadi kesalahan koneksi ke server.');
             }
         }
 
