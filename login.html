@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CashFlow. | Akses Masuk</title>
+    
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%2306b6d4'/><text x='50' y='72' font-size='65' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>C</text></svg>">
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,8 +26,33 @@
             }
         }
     </script>
+
+    <!-- ANIMASI KUSTOM CSS -->
+    <style>
+        /* Animasi pergerakan cahaya lambat (Ambient Blobs) */
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+            animation: blob 12s infinite alternate ease-in-out;
+        }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        /* Animasi melayang untuk kartu quote */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+    </style>
 </head>
-<body class="bg-[#09090b] text-zinc-100 min-h-screen font-sans antialiased selection:bg-cyan-500/30 overflow-hidden flex">
+<body class="bg-[#050505] text-zinc-100 min-h-screen font-sans antialiased selection:bg-cyan-500/30 overflow-hidden flex relative">
     
     <!-- Elegant Page Loader -->
     <div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
@@ -36,37 +62,42 @@
         </div>
     </div>
 
+    <!-- BACKGROUND ANIMATED BLOBS UTAMA -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <!-- Blob Cyan Kiri Atas -->
+        <div class="absolute -top-20 -left-20 w-96 h-96 bg-cyan-500/20 rounded-full mix-blend-screen filter blur-[120px] opacity-50 animate-blob"></div>
+        <!-- Blob Biru Kanan Bawah -->
+        <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-blue-600/20 rounded-full mix-blend-screen filter blur-[120px] opacity-40 animate-blob animation-delay-2000"></div>
+    </div>
+
     <!-- BAGIAN KIRI: Form Login/Register -->
     <div class="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 lg:p-24 relative z-10">
         
         <!-- Logo -->
         <div class="absolute top-8 left-8 lg:top-12 lg:left-12 flex items-center gap-3">
             <h1 class="text-2xl font-bold tracking-tight text-white">CashFlow<span class="text-cyan-500">.</span></h1>
-            <span class="bg-zinc-800 text-zinc-300 text-xs px-3 py-1 rounded-full border border-white/10 font-medium">Finance</span>
+            <span class="bg-zinc-800/80 backdrop-blur-md text-zinc-300 text-xs px-3 py-1 rounded-full border border-white/10 font-medium">Finance</span>
         </div>
 
-        <!-- Wadah Form (Glassmorphism) -->
-        <div class="w-full max-w-md bg-zinc-900/40 p-10 rounded-[2rem] border border-white/5 backdrop-blur-xl shadow-2xl relative">
-            <!-- Glow effect di belakang form -->
-            <div class="absolute -top-10 -left-10 w-32 h-32 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none"></div>
-
+        <!-- Wadah Form (Glassmorphism Elegan) -->
+        <div class="w-full max-w-md bg-[#09090b]/60 p-10 rounded-[2rem] border border-white/10 backdrop-blur-xl shadow-2xl relative">
             <h2 id="form-title" class="text-3xl font-bold mb-2 tracking-tight text-white">Selamat Datang!</h2>
-            <p id="form-subtitle" class="text-zinc-500 text-sm mb-8">Silakan masuk untuk melanjutkan ke dashboard.</p>
+            <p id="form-subtitle" class="text-zinc-400 text-sm mb-8">Silakan masuk untuk melanjutkan ke dashboard.</p>
             
             <!-- Notifikasi Pesan -->
-            <div id="error-msg" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-4 rounded-2xl mb-6 text-sm font-medium"></div>
-            <div id="success-msg" class="hidden bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-2xl mb-6 text-sm font-medium"></div>
+            <div id="error-msg" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-4 rounded-2xl mb-6 text-sm font-medium backdrop-blur-sm"></div>
+            <div id="success-msg" class="hidden bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-2xl mb-6 text-sm font-medium backdrop-blur-sm"></div>
 
             <form id="auth-form" onsubmit="handleSubmit(event)" class="space-y-5">
                 <div>
                     <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Username</label>
-                    <input type="text" id="username" required placeholder="Masukkan username Anda" class="w-full bg-[#09090b] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-700">
+                    <input type="text" id="username" required placeholder="Masukkan username Anda" class="w-full bg-zinc-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600 backdrop-blur-md">
                 </div>
                 <div>
                     <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Kata Sandi</label>
-                    <input type="password" id="password" required placeholder="••••••••" class="w-full bg-[#09090b] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-700">
+                    <input type="password" id="password" required placeholder="••••••••" class="w-full bg-zinc-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600 backdrop-blur-md">
                 </div>
-                <button type="submit" id="submit-btn" class="w-full bg-zinc-100 hover:bg-white text-zinc-900 font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] mt-4 flex items-center justify-center gap-2">
+                <button type="submit" id="submit-btn" class="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] transform hover:-translate-y-0.5 mt-6 flex items-center justify-center gap-2">
                     <span id="btn-text">Masuk ke Akun</span>
                 </button>
             </form>
@@ -79,25 +110,30 @@
     </div>
 
     <!-- BAGIAN KANAN: Visual & Motivasi (Hanya muncul di Desktop) -->
-    <div class="hidden lg:flex w-1/2 relative bg-zinc-900 border-l border-white/5 items-center justify-center p-24">
-        <!-- Efek Latar Belakang -->
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.05)_0,transparent_70%)]"></div>
-        <div class="absolute bottom-0 right-0 w-96 h-96 bg-cyan-500/5 blur-[100px] rounded-full pointer-events-none"></div>
-        <div class="absolute top-0 left-0 w-72 h-72 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none"></div>
+    <div class="hidden lg:flex w-1/2 relative bg-[#09090b] border-l border-white/5 items-center justify-center p-24 overflow-hidden">
+        
+        <!-- Animated Blobs Spesifik Kanan -->
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.03)_0,transparent_70%)]"></div>
+        <div class="absolute top-1/4 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
+        <div class="absolute bottom-1/4 right-1/3 w-80 h-80 bg-purple-500/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
 
-        <!-- Kartu Kutipan Finansial -->
-        <div class="relative z-10 w-full max-w-lg bg-[#09090b]/80 backdrop-blur-md p-10 rounded-[2.5rem] border border-white/5">
-            <div class="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center border border-white/10 mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-cyan-500" fill="currentColor" viewBox="0 0 256 256"><path d="M116,72v88a48.05,48.05,0,0,1-48,48H52a12,12,0,0,1,0-24h16a24,24,0,0,0,24-24V104H68a12,12,0,0,1-12-12V72A12,12,0,0,1,68,60h36A12,12,0,0,1,116,72Zm84-12H164a12,12,0,0,0-12,12V92a12,12,0,0,0,12,12h24v56a24,24,0,0,1-24,24H148a12,12,0,0,0,0,24h16a48.05,48.05,0,0,0,48-48V72A12,12,0,0,0,200,60Z"></path></svg>
+        <!-- Kartu Kutipan Finansial (Diberi animasi melayang) -->
+        <div class="relative z-10 w-full max-w-lg bg-zinc-900/60 backdrop-blur-xl p-10 rounded-[2.5rem] border border-white/10 shadow-2xl animate-float">
+            
+            <div class="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 blur-2xl rounded-full pointer-events-none"></div>
+
+            <div class="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center border border-white/10 mb-8 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 256 256"><path d="M116,72v88a48.05,48.05,0,0,1-48,48H52a12,12,0,0,1,0-24h16a24,24,0,0,0,24-24V104H68a12,12,0,0,1-12-12V72A12,12,0,0,1,68,60h36A12,12,0,0,1,116,72Zm84-12H164a12,12,0,0,0-12,12V92a12,12,0,0,0,12,12h24v56a24,24,0,0,1-24,24H148a12,12,0,0,0,0,24h16a48.05,48.05,0,0,0,48-48V72A12,12,0,0,0,200,60Z"></path></svg>
             </div>
-            <p id="quote-text" class="text-2xl font-light leading-relaxed text-zinc-300 mb-6">"Kendalikan uangmu hari ini, atau uang itu yang akan mengendalikan masa depanmu."</p>
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
+            <p id="quote-text" class="text-2xl font-light leading-relaxed text-zinc-200 mb-8 relative z-10">"Kendalikan uangmu hari ini, atau uang itu yang akan mengendalikan masa depanmu."</p>
+            
+            <div class="flex items-center gap-4 relative z-10">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-cyan-500/30">
                     AI
                 </div>
                 <div>
-                    <p id="quote-author" class="font-medium text-white">Financial Companion</p>
-                    <p class="text-xs text-zinc-500">Smart Insights</p>
+                    <p id="quote-author" class="font-bold text-white tracking-wide">Financial Companion</p>
+                    <p class="text-xs text-zinc-400 mt-0.5">Smart Insights</p>
                 </div>
             </div>
         </div>
@@ -161,29 +197,26 @@
                         localStorage.setItem('cashflow_token', data.token);
                         localStorage.setItem('cashflow_username', username);
                         
-                        // === MULAI EFEK JEDA 5 DETIK ELEGAN ===
+                        // === EFEK JEDA 5 DETIK ELEGAN ===
                         const loader = document.getElementById("page-loader");
                         const loaderText = document.getElementById("loader-text");
                         
                         loader.style.display = "flex";
                         
-                        // Berikan efek transisi lembut
                         setTimeout(() => {
                             loader.classList.remove("opacity-0");
                             loader.classList.add("opacity-100");
                         }, 10);
 
-                        // Munculkan teks "Menyiapkan Dasbor Keamanan..." sedikit terlambat agar makin dramatis
                         setTimeout(() => {
                             loaderText.classList.remove("hidden");
                             setTimeout(() => loaderText.classList.remove("opacity-0"), 50);
                         }, 800);
 
-                        // Tunggu 5 detik lalu redirect ke dasbor
                         setTimeout(() => {
                             window.location.href = '/dashboard';
                         }, 5000);
-                        // === SELESAI EFEK ===
+                        // ==================================
 
                     } else {
                         succDiv.innerText = 'Registrasi berhasil! Silakan login untuk memulai.';
@@ -208,38 +241,32 @@
             }
         }
     </script>
+
     <script>
     document.addEventListener("DOMContentLoaded", () => {
         const loader = document.getElementById("page-loader");
         
-        // 1. Efek Fade-Out saat halaman selesai dimuat (untuk load awal)
+        // Efek Fade-Out saat load awal
         setTimeout(() => {
             loader.classList.remove("opacity-100");
             loader.classList.add("opacity-0");
             
-            // Hilangkan elemen setelah transisi selesai (500ms)
             setTimeout(() => {
                 loader.style.display = "none";
             }, 500);
-        }, 300); // Sedikit jeda agar logo terlihat elegan sebelum hilang
+        }, 300);
 
-        // 2. Efek Fade-In saat tombol/link diklik untuk pindah halaman
+        // Efek transisi saat klik link pindah halaman
         document.querySelectorAll("a").forEach(link => {
             link.addEventListener("click", function(e) {
                 const href = this.getAttribute("href");
-                
-                // Cek apakah link valid dan bukan link anchor (seperti #services)
                 if (href && !href.startsWith("#") && this.target !== "_blank") {
-                    e.preventDefault(); // Cegah pindah halaman secara instan
-                    
+                    e.preventDefault(); 
                     loader.style.display = "flex";
-                    // Sedikit trik agar CSS transition berjalan mulus
                     setTimeout(() => {
                         loader.classList.remove("opacity-0");
                         loader.classList.add("opacity-100");
                     }, 10);
-
-                    // Pindah ke halaman baru setelah layar kembali gelap (500ms)
                     setTimeout(() => {
                         window.location.href = href;
                     }, 500);
@@ -247,6 +274,6 @@
             });
         });
     });
-</script>
+    </script>
 </body>
 </html>
