@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -122,7 +123,7 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Railway!")
 
-	// TABEL USERS (Jika belum ada, buat dengan kolom email)
+	// TABEL USERS
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id INT AUTO_INCREMENT PRIMARY KEY,
@@ -149,9 +150,9 @@ func main() {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	// Endpoint Publik
-	http.HandleFunc("/api/register", handleRegister)
-	http.HandleFunc("/api/login", handleLogin)
+	// Endpoint Publik (DILINDUNGI RATE LIMITER ANTI-BOT)
+	http.HandleFunc("/api/register", rateLimitMiddleware(handleRegister))
+	http.HandleFunc("/api/login", rateLimitMiddleware(handleLogin))
 
 	// Endpoint Privat (Dilindungi Middleware JWT)
 	http.HandleFunc("/api/account", authMiddleware(handleAddAccount))
@@ -172,6 +173,56 @@ func main() {
 	log.Println("Server berjalan di port", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
+
+// =========================================================================
+// FITUR KEAMANAN BARU: RATE LIMITER (ANTI SPAM / BRUTE FORCE)
+// =========================================================================
+var (
+	ipRates = make(map[string]*rateData)
+	rateMu  sync.Mutex
+)
+
+type rateData struct {
+	count     int
+	lastReset time.Time
+}
+
+func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Mengambil alamat IP pengguna yang sebenarnya (melewati Proxy Railway)
+		ip := r.RemoteAddr
+		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+			ip = strings.Split(forwarded, ",")[0]
+		} else {
+			ip = strings.Split(ip, ":")[0]
+		}
+
+		rateMu.Lock()
+		v, exists := ipRates[ip]
+
+		// Jika IP baru atau sudah lewat 1 menit sejak reset terakhir
+		if !exists || time.Since(v.lastReset) > time.Minute {
+			ipRates[ip] = &rateData{count: 1, lastReset: time.Now()}
+			rateMu.Unlock()
+			next(w, r)
+			return
+		}
+
+		// Jika dalam 1 menit dia mencoba lebih dari 10 kali, BLOKIR SEMENTARA!
+		if v.count >= 10 {
+			rateMu.Unlock()
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.WriteHeader(http.StatusTooManyRequests) // Kode Error 429
+			w.Write([]byte("Terlalu banyak percobaan. Harap tunggu 1 menit lagi karena alasan keamanan."))
+			return
+		}
+
+		v.count++
+		rateMu.Unlock()
+		next(w, r)
+	}
+}
+// =========================================================================
 
 // --- MIDDLEWARE KEAMANAN JWT ---
 func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -207,7 +258,7 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// --- FUNGSI REGISTER YANG DIPERBARUI ---
+// --- FUNGSI REGISTER ---
 func handleRegister(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -218,7 +269,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	var u User
 	json.NewDecoder(r.Body).Decode(&u)
 
-	// 1. Validasi Kolom Tidak Boleh Kosong (Sekarang wajib ada Email)
+	// 1. Validasi Kolom Tidak Boleh Kosong
 	if u.Username == "" || u.Email == "" || u.Password == "" {
 		http.Error(w, "Username, Email, dan password tidak boleh kosong", http.StatusBadRequest)
 		return
@@ -237,15 +288,14 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. Masukkan ke Database (Memasukkan Username, Email, dan Password)
+	// 4. Masukkan ke Database
 	res, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", u.Username, u.Email, string(hashedPassword))
 	if err != nil {
-		// Menangkap error jika Username atau Email sudah terpakai
 		http.Error(w, "Pendaftaran Gagal: Username atau Email sudah digunakan", http.StatusConflict)
 		return
 	}
 
-	// BUATKAN AKUN "DOMPET UTAMA" OTOMATIS UNTUK USER BARU
+	// BUATKAN AKUN "DOMPET UTAMA" OTOMATIS
 	newUserID, _ := res.LastInsertId()
 	db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0.00, ?)", newUserID)
 
@@ -278,7 +328,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Masukkan USER ID ke dalam token
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID:   userID,
@@ -304,7 +353,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 // --- Handler Cashflow (Data Terisolasi Berdasarkan User ID) ---
 
-// FUNGSI BARU: Tambah Dompet/Rekening
 func handleAddAccount(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(int)
 	var req AccountRequest
