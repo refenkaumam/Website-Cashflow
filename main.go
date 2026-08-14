@@ -99,17 +99,17 @@ func main() {
 	if err != nil {
 		log.Fatal("Database tidak bisa di-ping:", err)
 	}
-	log.Println("Berhasil terhubung ke database Cloud Aiven!")
+	log.Println("Berhasil terhubung ke database Railway!")
 
 	// Otomatis buat tabel users jika belum ada
 	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS users (
-			id INT AUTO_INCREMENT PRIMARY KEY,
-			username VARCHAR(50) NOT NULL UNIQUE,
-			password VARCHAR(255) NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `)
 	if err != nil {
 		log.Println("Gagal membuat tabel users:", err)
 	} else {
@@ -118,11 +118,11 @@ func main() {
 
 	// ROUTING HALAMAN & API
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "login.html") // Halaman awal sekarang diarahkan ke Login/Register
+		http.ServeFile(w, r, "login.html")
 	})
 
 	http.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html") // Dashboard utama aplikasi cashflow
+		http.ServeFile(w, r, "index.html")
 	})
 
 	// Endpoint Auth
@@ -208,7 +208,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Login berhasil"})
 }
 
-// --- Handler Cashflow Lainnya ---
+// --- Handler Cashflow ---
 func handleTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -219,6 +219,7 @@ func handleTransaction(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&t)
 	tx, _ := db.Begin()
 	tx.Exec(`INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description) VALUES (?, ?, ?, ?, ?)`, t.AccountID, t.Type, t.Amount, t.AdminFee, t.Desc)
+	
 	if t.Type == "INCOME" {
 		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ?", t.Amount, t.AccountID)
 	} else if t.Type == "EXPENSE" {
@@ -244,13 +245,16 @@ func handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	var accID int
 	var tType string
 	var amount, adminFee float64
-	tx.QueryRow("SELECT account_id, transaction_type, amount, admin_fee FROM transactions WHERE id = ?", idStr).Scan(&accID, &tType, &amount, &adminFee)
-	if tType == "INCOME" {
-		tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ?", amount, accID)
-	} else {
-		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ?", amount+adminFee, accID)
+	
+	err := tx.QueryRow("SELECT account_id, transaction_type, amount, admin_fee FROM transactions WHERE id = ?", idStr).Scan(&accID, &tType, &amount, &adminFee)
+	if err == nil {
+		if tType == "INCOME" {
+			tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ?", amount, accID)
+		} else {
+			tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ?", amount+adminFee, accID)
+		}
+		tx.Exec("DELETE FROM transactions WHERE id = ?", idStr)
 	}
-	tx.Exec("DELETE FROM transactions WHERE id = ?", idStr)
 	tx.Commit()
 	w.WriteHeader(http.StatusOK)
 }
@@ -341,41 +345,59 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 	var data DashboardData
 	var totalBal, totalBill, totalPiutang float64
 
-	rowsAcc, _ := db.Query("SELECT id, bank_name, balance FROM accounts")
-	for rowsAcc.Next() {
-		var acc Account
-		rowsAcc.Scan(&acc.ID, &acc.Name, &acc.Balance)
-		data.Balances = append(data.Balances, acc)
-		totalBal += acc.Balance
+	// Ambil Data Akun
+	rowsAcc, err := db.Query("SELECT id, bank_name, balance FROM accounts")
+	if err == nil {
+		for rowsAcc.Next() {
+			var acc Account
+			rowsAcc.Scan(&acc.ID, &acc.Name, &acc.Balance)
+			data.Balances = append(data.Balances, acc)
+			totalBal += acc.Balance
+		}
+		rowsAcc.Close()
 	}
 
-	rowsBill, _ := db.Query("SELECT id, platform, item_name, monthly_amount, tenor, total_amount FROM bills")
-	for rowsBill.Next() {
-		var b Bill
-		rowsBill.Scan(&b.ID, &b.Platform, &b.ItemName, &b.MonthlyAmount, &b.Tenor, &b.TotalAmount)
-		data.Bills = append(data.Bills, b)
-		totalBill += b.TotalAmount
+	// Ambil Data Tagihan
+	rowsBill, err := db.Query("SELECT id, platform, item_name, monthly_amount, tenor, total_amount FROM bills")
+	if err == nil {
+		for rowsBill.Next() {
+			var b Bill
+			rowsBill.Scan(&b.ID, &b.Platform, &b.ItemName, &b.MonthlyAmount, &b.Tenor, &b.TotalAmount)
+			data.Bills = append(data.Bills, b)
+			totalBill += b.TotalAmount
+		}
+		rowsBill.Close()
 	}
 
-	rowsPiutang, _ := db.Query("SELECT id, name, amount FROM piutang")
-	for rowsPiutang.Next() {
-		var p Piutang
-		rowsPiutang.Scan(&p.ID, &p.Name, &p.Amount)
-		data.Piutangs = append(data.Piutangs, p)
-		totalPiutang += p.Amount
+	// Ambil Data Piutang
+	rowsPiutang, err := db.Query("SELECT id, name, amount FROM piutang")
+	if err == nil {
+		for rowsPiutang.Next() {
+			var p Piutang
+			rowsPiutang.Scan(&p.ID, &p.Name, &p.Amount)
+			data.Piutangs = append(data.Piutangs, p)
+			totalPiutang += p.Amount
+		}
+		rowsPiutang.Close()
 	}
 
-	rowsTx, _ := db.Query("SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, t.created_at FROM transactions t JOIN accounts a ON t.account_id = a.id ORDER BY t.created_at DESC LIMIT 50")
-	for rowsTx.Next() {
-		var tx TransactionRow
-		rowsTx.Scan(&tx.ID, &tx.BankName, &tx.Type, &tx.Amount, &tx.AdminFee, &tx.Desc, &tx.CreatedAt)
-		data.Transactions = append(data.Transactions, tx)
+	// Ambil Data Transaksi (Tanggal diformat langsung di SQL)
+	rowsTx, err := db.Query("SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i') FROM transactions t JOIN accounts a ON t.account_id = a.id ORDER BY t.created_at DESC LIMIT 50")
+	if err == nil {
+		for rowsTx.Next() {
+			var tx TransactionRow
+			rowsTx.Scan(&tx.ID, &tx.BankName, &tx.Type, &tx.Amount, &tx.AdminFee, &tx.Desc, &tx.CreatedAt)
+			data.Transactions = append(data.Transactions, tx)
+		}
+		rowsTx.Close()
 	}
 
+	// Hitung Total Metrik
 	data.TotalBalance = totalBal
 	data.TotalBill = totalBill
 	data.TotalPiutang = totalPiutang
 	data.NetBalance = totalBal - totalBill
 	data.GrandTotal = (totalBal - totalBill) + totalPiutang
+
 	json.NewEncoder(w).Encode(data)
 }
