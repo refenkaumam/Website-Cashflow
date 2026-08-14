@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -100,28 +98,45 @@ type User struct {
 
 var db *sql.DB
 
-// toDSN mengubah format connection string URL Railway jadi DSN Go yang aman
+// toDSN mengubah format connection string URL Railway jadi DSN Go yang aman (Aman dari password berkarakter khusus)
 func toDSN(raw string) string {
 	if !strings.HasPrefix(raw, "mysql://") {
 		return raw // sudah format DSN, tidak perlu diubah
 	}
 
-	u, err := url.Parse(raw)
-	if err != nil {
-		log.Fatal("DATABASE_URL tidak valid: ", err)
+	// Hilangkan awalan "mysql://"
+	trimmed := strings.TrimPrefix(raw, "mysql://")
+
+	// Cari '@' paling belakang untuk memisahkan kredensial (user:pass) dari host
+	lastAtIndex := strings.LastIndex(trimmed, "@")
+	if lastAtIndex == -1 {
+		return raw
 	}
 
-	user := u.User.Username()
-	pass, _ := u.User.Password()
-	host := u.Host
-	
-	// Ambil nama database dari path, jika kosong gunakan default "railway"
-	dbName := strings.TrimPrefix(u.Path, "/")
+	credentials := trimmed[:lastAtIndex]
+	rest := trimmed[lastAtIndex+1:] // Berisi host:port/dbname
+
+	// Cari tanda '/' pertama untuk memisahkan host dan nama database
+	slashIndex := strings.Index(rest, "/")
+	var host, dbName string
+	if slashIndex == -1 {
+		host = rest
+		dbName = "railway"
+	} else {
+		host = rest[:slashIndex]
+		dbName = rest[slashIndex+1:]
+		// Bersihkan jika ada parameter tambahan di belakang (seperti ?sslmode=...)
+		if qIndex := strings.Index(dbName, "?"); qIndex != -1 {
+			dbName = dbName[:qIndex]
+		}
+	}
+
 	if dbName == "" {
 		dbName = "railway"
 	}
 
-	return fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", user, pass, host, dbName)
+	// Format DSN akhir yang diterima oleh driver MySQL Go
+	return fmt.Sprintf("%s@tcp(%s)/%s?parseTime=true", credentials, host, dbName)
 }
 
 func main() {
