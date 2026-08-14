@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CashFlow. | Premium Dashboard</title>
     
-    <!-- Google Fonts: Plus Jakarta Sans untuk kesan mahal & modern -->
+    <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -30,7 +30,6 @@
     </script>
     
     <style>
-        /* Custom scrollbar untuk kesan rapi */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
@@ -41,9 +40,8 @@
     
     <div class="max-w-7xl mx-auto space-y-8">
         
-        <!-- HEADER & SAPAAN (Glassmorphism minimalis) -->
+        <!-- HEADER & SAPAAN -->
         <header class="relative overflow-hidden bg-zinc-900/40 border border-white/5 backdrop-blur-xl p-8 rounded-3xl flex flex-col md:flex-row justify-between items-center shadow-2xl">
-            <!-- Efek cahaya (Glow) di latar belakang header -->
             <div class="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none"></div>
             
             <div class="relative z-10">
@@ -62,45 +60,39 @@
             </div>
         </header>
 
-        <!-- GRID METRIK (Ringkasan Keuangan) -->
+        <!-- GRID METRIK -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Card 1 -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-cyan-400/70 transition-colors">Total Saldo Bersih</p>
                 <h3 id="net-balance" class="text-3xl font-bold text-white tracking-tight">Rp 0</h3>
             </div>
-            <!-- Card 2 -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-emerald-400/70 transition-colors">Total Saldo Bank</p>
                 <h3 id="total-balance" class="text-2xl font-semibold text-zinc-200 mt-1">Rp 0</h3>
             </div>
-            <!-- Card 3 -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-rose-400/70 transition-colors">Total Tagihan / Cicilan</p>
                 <h3 id="total-bill" class="text-2xl font-semibold text-zinc-200 mt-1">Rp 0</h3>
             </div>
-            <!-- Card 4 -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-amber-400/70 transition-colors">Total Piutang</p>
                 <h3 id="total-piutang" class="text-2xl font-semibold text-zinc-200 mt-1">Rp 0</h3>
             </div>
         </div>
 
-        <!-- VISUALISASI GRAFIK (CHART.JS) -->
+        <!-- VISUALISASI GRAFIK REAL-TIME -->
         <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-semibold text-zinc-100 tracking-tight">Analitik Arus Kas (Dummy)</h3>
-                <span class="text-xs font-medium text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full">Bulan Ini</span>
+                <h3 class="text-lg font-semibold text-zinc-100 tracking-tight">Analitik Arus Kas (Real-time)</h3>
+                <span class="text-xs font-medium text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full">Aktivitas Terkini</span>
             </div>
-            <!-- Wadah Chart -->
             <div class="relative h-72 w-full">
                 <canvas id="cashflowChart"></canvas>
             </div>
         </div>
 
-        <!-- BAGIAN INPUT FORM (3 Kolom) -->
+        <!-- BAGIAN INPUT FORM -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
             <!-- 1. Form Transaksi -->
             <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
@@ -197,7 +189,7 @@
 
         </div>
 
-        <!-- TABEL DATA (Riwayat, Akun, dll) -->
+        <!-- TABEL DATA -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
             
             <!-- Riwayat Transaksi -->
@@ -220,7 +212,7 @@
                 </div>
             </div>
 
-            <!-- Daftar Akun / Dompet -->
+            <!-- Daftar Akun -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
                 <h3 class="text-base font-semibold mb-6 text-zinc-100">Distribusi Kekayaan</h3>
                 <div id="accounts-list" class="space-y-4 max-h-96 overflow-y-auto pr-2">
@@ -228,7 +220,7 @@
                 </div>
             </div>
             
-            <!-- Daftar Tagihan & Cicilan -->
+            <!-- Daftar Tagihan -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
                 <h3 class="text-base font-semibold mb-6 text-zinc-100">Kewajiban Tagihan</h3>
                 <div class="overflow-x-auto max-h-96 overflow-y-auto pr-2">
@@ -271,7 +263,6 @@
     </div>
 
     <script>
-        // Logika Motivasi
         const motivations = [
             "“Setiap nominal kecil yang kamu sisihkan adalah bentuk penghargaan untuk kerja kerasmu.”",
             "“Investasi terbaik adalah investasi pada ketenangan pikiran bebas utang.”",
@@ -279,7 +270,6 @@
             "“Masa depan yang cerah dibangun dari keputusan finansial yang bijak hari ini.”"
         ];
         
-        // Ambil nama dari session/local storage
         const currentUsername = localStorage.getItem('cashflow_username') || 'Sobat Finansial';
         document.getElementById('welcome-user').innerText = `Halo, ${currentUsername}! 👋`;
         document.getElementById('ai-motivation').innerText = motivations[Math.floor(Math.random() * motivations.length)];
@@ -301,27 +291,48 @@
             }
         }
 
-        // --- KONFIGURASI CHART.JS DUMMY ---
+        // --- KONFIGURASI CHART.JS REAL ---
         let cashflowChartInstance = null;
-        function renderChart() {
+
+        function renderChart(transactions) {
             const ctx = document.getElementById('cashflowChart').getContext('2d');
             
-            // Hapus chart lama jika di-refresh
             if(cashflowChartInstance) { cashflowChartInstance.destroy(); }
 
-            // Gradien warna garis chart
+            let labels = [];
+            let dataNominal = [];
+
+            let recentTx = [];
+            if (transactions && transactions.length > 0) {
+                // Ambil maks 10 transaksi terbaru dan balik urutannya (kiri = lama, kanan = baru)
+                recentTx = transactions.slice(0, 10).reverse();
+            }
+            
+            recentTx.forEach(tx => {
+                let tanggal = tx.created_at ? tx.created_at.split(' ')[0] : 'Tgl';
+                labels.push(tanggal);
+                
+                let nominal = tx.transaction_type === 'INCOME' ? tx.amount : -tx.amount;
+                dataNominal.push(nominal);
+            });
+
+            if (labels.length === 0) {
+                labels = ['Belum ada data'];
+                dataNominal = [0];
+            }
+
             let gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
-            gradientFill.addColorStop(0, 'rgba(6, 182, 212, 0.4)'); // Cyan color
+            gradientFill.addColorStop(0, 'rgba(6, 182, 212, 0.4)'); 
             gradientFill.addColorStop(1, 'rgba(6, 182, 212, 0)');
 
             cashflowChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
+                    labels: labels,
                     datasets: [{
-                        label: 'Total Aset',
-                        data: [1500000, 2300000, 1800000, 3100000], // Data statis/dummy untuk preview
-                        borderColor: '#06b6d4', // Cyan-500
+                        label: 'Mutasi (Rp)',
+                        data: dataNominal,
+                        borderColor: '#06b6d4', 
                         backgroundColor: gradientFill,
                         borderWidth: 3,
                         pointBackgroundColor: '#09090b',
@@ -330,7 +341,7 @@
                         pointRadius: 4,
                         pointHoverRadius: 6,
                         fill: true,
-                        tension: 0.4 // Melengkungkan garis
+                        tension: 0.4
                     }]
                 },
                 options: {
@@ -339,13 +350,12 @@
                     plugins: { legend: { display: false } },
                     scales: {
                         y: { 
-                            beginAtZero: true,
                             grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
                             ticks: { color: '#71717a', font: { family: "'Plus Jakarta Sans', sans-serif" } }
                         },
                         x: { 
                             grid: { display: false, drawBorder: false },
-                            ticks: { color: '#71717a', font: { family: "'Plus Jakarta Sans', sans-serif" } }
+                            ticks: { color: '#71717a', font: { family: "'Plus Jakarta Sans', sans-serif" }, maxTicksLimit: 7 }
                         }
                     },
                     interaction: { mode: 'index', intersect: false }
@@ -355,13 +365,12 @@
 
         async function loadDashboard() {
             try {
-                // Untuk sementara saat testing, chart dirender otomatis
-                renderChart();
-
                 const response = await fetch('/api/history');
                 const data = await response.json();
 
-                // Format ke format Rupiah
+                // Panggil renderChart menggunakan data transaksi asli dari API
+                renderChart(data.transactions);
+
                 document.getElementById('net-balance').innerText = `Rp ${data.net_balance.toLocaleString('id-ID')}`;
                 document.getElementById('total-balance').innerText = `Rp ${data.total_balance.toLocaleString('id-ID')}`;
                 document.getElementById('total-bill').innerText = `Rp ${data.total_bill.toLocaleString('id-ID')}`;
@@ -369,7 +378,6 @@
 
                 globalAccounts = data.balances || [];
 
-                // Dropdown Akun
                 const accSelect = document.getElementById('tx-account');
                 const targetAccSelect = document.getElementById('tx-target-account');
                 accSelect.innerHTML = '';
@@ -380,7 +388,6 @@
                     targetAccSelect.innerHTML += `<option value="${acc.id}">${acc.bank_name}</option>`;
                 });
 
-                // List Akun dengan styling baru
                 const accContainer = document.getElementById('accounts-list');
                 accContainer.innerHTML = '';
                 globalAccounts.forEach(acc => {
@@ -397,7 +404,6 @@
                     `;
                 });
 
-                // Tabel Transaksi
                 const txTable = document.getElementById('transaction-table');
                 txTable.innerHTML = '';
                 if (data.transactions && data.transactions.length > 0) {
@@ -424,7 +430,6 @@
                     txTable.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-zinc-600">Belum ada aktivitas transaksi.</td></tr>`;
                 }
 
-                // Tabel Tagihan
                 const billsTable = document.getElementById('bills-table');
                 billsTable.innerHTML = '';
                 if (data.bills && data.bills.length > 0) {
@@ -449,7 +454,6 @@
                     billsTable.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-zinc-600">Tidak ada tagihan aktif.</td></tr>`;
                 }
 
-                // Tabel Piutang
                 const piutangTable = document.getElementById('piutang-table');
                 piutangTable.innerHTML = '';
                 if (data.piutangs && data.piutangs.length > 0) {
@@ -475,7 +479,6 @@
             }
         }
 
-        // Action Buttons
         async function submitTransaction(e) {
             e.preventDefault();
             const payload = {
