@@ -37,10 +37,11 @@
     </style>
 </head>
 <body class="bg-[#09090b] text-zinc-100 min-h-screen p-4 md:p-8 font-sans antialiased selection:bg-cyan-500/30">
+    
     <!-- Elegant Page Loader -->
-<div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
-    <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
-</div>
+    <div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
+        <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
+    </div>
     
     <div class="max-w-7xl mx-auto space-y-8">
         
@@ -61,6 +62,10 @@
                 <div class="hidden md:block bg-white/5 px-4 py-2 rounded-2xl backdrop-blur-md text-xs border border-white/10 text-zinc-400">
                     🤖 AI Financial Companion
                 </div>
+                <!-- TOMBOL TAMBAH DOMPET -->
+                <button onclick="openWalletModal()" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                    + Tambah Dompet
+                </button>
                 <button onclick="logout()" class="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-rose-500/20 border border-white/5 hover:border-rose-500/30 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300">
                     Logout
                 </button>
@@ -271,6 +276,29 @@
 
     </div>
 
+    <!-- MODAL POP-UP TAMBAH DOMPET -->
+    <div id="wallet-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-zinc-900 border border-white/10 p-8 rounded-3xl w-full max-w-md transform scale-95 transition-transform duration-300" id="wallet-modal-content">
+            <h3 class="text-xl font-bold mb-2 text-white">Tambah Dompet / Rekening</h3>
+            <p class="text-zinc-500 text-xs mb-6">Tambahkan sumber dana baru untuk mencatat transaksi.</p>
+            
+            <form onsubmit="submitWallet(event)" class="space-y-5">
+                <div>
+                    <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Nama Bank / Dompet</label>
+                    <input type="text" id="new-wallet-name" required placeholder="Contoh: BCA, SeaBank, Uang Tunai" class="w-full bg-[#09090b] border border-white/10 rounded-2xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 transition-all">
+                </div>
+                <div>
+                    <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Saldo Awal (Rp)</label>
+                    <input type="number" id="new-wallet-balance" required placeholder="0" value="0" class="w-full bg-[#09090b] border border-white/10 rounded-2xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 transition-all">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeWalletModal()" class="w-1/2 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3 rounded-xl text-sm transition">Batal</button>
+                    <button type="submit" class="w-1/2 bg-cyan-500 hover:bg-cyan-600 text-black font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-cyan-500/20">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // SATPAM JWT TOKEN: Cek apakah user sudah punya token karcis masuk
         const token = localStorage.getItem('cashflow_token');
@@ -428,8 +456,8 @@
                     accContainer.innerHTML += `
                         <div class="flex justify-between items-center bg-[#09090b] p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 font-bold text-xs border border-white/5">
-                                    ${acc.bank_name.substring(0,2).toUpperCase()}
+                                <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 font-bold text-xs border border-white/5 uppercase">
+                                    ${acc.bank_name.substring(0,2)}
                                 </div>
                                 <span class="font-semibold text-zinc-200">${acc.bank_name}</span>
                             </div>
@@ -513,6 +541,55 @@
 
             } catch (err) {
                 console.error('Gagal memuat data dashboard:', err);
+            }
+        }
+
+        // --- FUNGSI TAMBAH DOMPET ---
+        function openWalletModal() {
+            const modal = document.getElementById('wallet-modal');
+            const content = document.getElementById('wallet-modal-content');
+            modal.classList.remove('hidden');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeWalletModal() {
+            const modal = document.getElementById('wallet-modal');
+            const content = document.getElementById('wallet-modal-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('new-wallet-name').value = '';
+                document.getElementById('new-wallet-balance').value = '0';
+            }, 300);
+        }
+
+        async function submitWallet(e) {
+            e.preventDefault();
+            const bankName = document.getElementById('new-wallet-name').value;
+            const balance = parseFloat(document.getElementById('new-wallet-balance').value) || 0;
+            
+            try {
+                const response = await fetch('/api/account', {
+                    method: 'POST',
+                    headers: authHeaders, // Menggunakan token JWT yang sama
+                    body: JSON.stringify({ bank_name: bankName, balance: balance })
+                });
+                
+                if (response.ok) {
+                    closeWalletModal();
+                    // Load ulang data dasbor secara mulus tanpa layar berkedip
+                    loadDashboard(); 
+                } else {
+                    alert('Gagal menambahkan dompet.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan jaringan.');
             }
         }
 

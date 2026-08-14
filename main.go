@@ -26,6 +26,12 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// Struct baru untuk menerima data tambah dompet/akun
+type AccountRequest struct {
+	BankName string  `json:"bank_name"`
+	Balance  float64 `json:"balance"`
+}
+
 type Transaction struct {
 	AccountID       int     `json:"account_id"`
 	TargetAccountID *int    `json:"target_account_id"`
@@ -115,13 +121,13 @@ func main() {
 	log.Println("Berhasil terhubung ke database Railway!")
 
 	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(50) NOT NULL UNIQUE,
-            password VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    `)
+		CREATE TABLE IF NOT EXISTS users (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			username VARCHAR(50) NOT NULL UNIQUE,
+			password VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
 	if err != nil {
 		log.Println("Gagal membuat tabel users:", err)
 	}
@@ -144,6 +150,7 @@ func main() {
 	http.HandleFunc("/api/login", handleLogin)
 
 	// Endpoint Privat (Dilindungi Middleware JWT)
+	http.HandleFunc("/api/account", authMiddleware(handleAddAccount)) // <-- RUTE BARU TAMBAH DOMPET
 	http.HandleFunc("/api/transaction", authMiddleware(handleTransaction))
 	http.HandleFunc("/api/transaction/delete", authMiddleware(handleDeleteTransaction))
 	http.HandleFunc("/api/history", authMiddleware(handleHistory))
@@ -282,14 +289,35 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Handler Cashflow (Data Terisolasi Berdasarkan User ID) ---
+
+// FUNGSI BARU: Tambah Dompet/Rekening
+func handleAddAccount(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID").(int)
+	var req AccountRequest
+	json.NewDecoder(r.Body).Decode(&req)
+
+	if req.BankName == "" {
+		http.Error(w, "Nama dompet tidak boleh kosong", http.StatusBadRequest)
+		return
+	}
+
+	_, err := db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES (?, ?, ?)", req.BankName, req.Balance, userID)
+	if err != nil {
+		http.Error(w, "Gagal menambahkan dompet", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
 func handleTransaction(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(int)
 	var t Transaction
 	json.NewDecoder(r.Body).Decode(&t)
 	tx, _ := db.Begin()
-	
+
 	tx.Exec(`INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description, user_id) VALUES (?, ?, ?, ?, ?, ?)`, t.AccountID, t.Type, t.Amount, t.AdminFee, t.Desc, userID)
-	
+
 	if t.Type == "INCOME" {
 		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?", t.Amount, t.AccountID, userID)
 	} else if t.Type == "EXPENSE" {
@@ -311,7 +339,7 @@ func handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	var accID int
 	var tType string
 	var amount, adminFee float64
-	
+
 	err := tx.QueryRow("SELECT account_id, transaction_type, amount, admin_fee FROM transactions WHERE id = ? AND user_id = ?", idStr, userID).Scan(&accID, &tType, &amount, &adminFee)
 	if err == nil {
 		if tType == "INCOME" {
@@ -350,18 +378,18 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	var platform, itemName string
 	var currentTotal float64
 	var tenor int
-	
+
 	err := tx.QueryRow("SELECT platform, item_name, total_amount, tenor FROM bills WHERE id = ? AND user_id = ?", req.BillID, userID).Scan(&platform, &itemName, &currentTotal, &tenor)
 	if err != nil {
 		tx.Rollback()
 		http.Error(w, "Not found", 404)
 		return
 	}
-	
+
 	desc := fmt.Sprintf("Cicilan %s - %s", platform, itemName)
 	tx.Exec("INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description, user_id) VALUES (?, 'EXPENSE', ?, 0, ?, ?)", req.AccountID, req.PaidAmount, desc, userID)
 	tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ? AND user_id = ?", req.PaidAmount, req.AccountID, userID)
-	
+
 	newTotal := currentTotal - req.PaidAmount
 	newTenor := tenor - 1
 	if newTenor <= 0 || newTotal <= 0 {
