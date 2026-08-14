@@ -129,11 +129,15 @@ func main() {
 
 	// ROUTING HALAMAN
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "login.html")
+		http.ServeFile(w, r, "home.html") // Halaman utama (Landing Page)
+	})
+
+	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "login.html") // Halaman Login / Register
 	})
 
 	http.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		http.ServeFile(w, r, "index.html") // Dashboard utama
 	})
 
 	// Endpoint Publik (Auth)
