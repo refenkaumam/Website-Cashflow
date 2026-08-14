@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +15,9 @@
     
     <!-- Chart.js untuk Visualisasi Grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- AOS Animation CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
     <!-- Konfigurasi Font Tailwind -->
     <script>
@@ -34,19 +37,26 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+        /* Konfigurasi CSS Lenis Smooth Scroll */
+        html.lenis { height: auto; }
+        .lenis.lenis-smooth { scroll-behavior: auto !important; }
+        .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+        .lenis.lenis-stopped { overflow: hidden; }
+        .lenis.lenis-scrolling iframe { pointer-events: none; }
     </style>
 </head>
-<body class="bg-[#09090b] text-zinc-100 min-h-screen p-4 md:p-8 font-sans antialiased selection:bg-cyan-500/30">
+<body class="bg-[#09090b] text-zinc-100 min-h-screen p-4 md:p-8 font-sans antialiased selection:bg-cyan-500/30 overflow-x-hidden">
     
     <!-- Elegant Page Loader -->
     <div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
         <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
     </div>
     
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="max-w-7xl mx-auto space-y-8 relative z-10">
         
         <!-- WIDGET SAPAAN & MOTIVASI AI -->
-        <header class="relative overflow-hidden bg-zinc-900/40 border border-white/5 backdrop-blur-xl p-8 rounded-3xl flex flex-col md:flex-row justify-between items-center shadow-2xl">
+        <header data-aos="fade-down" data-aos-duration="1000" class="relative overflow-hidden bg-zinc-900/40 border border-white/5 backdrop-blur-xl p-8 rounded-3xl flex flex-col md:flex-row justify-between items-center shadow-2xl">
             <div class="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none"></div>
             
             <div class="relative z-10">
@@ -60,10 +70,10 @@
             
             <div class="relative z-10 mt-6 md:mt-0 flex items-center gap-4">
                 <!-- TOMBOL TAMBAH DOMPET -->
-                <button onclick="openWalletModal()" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <button onclick="openWalletModal()" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95">
                     + Tambah Dompet
                 </button>
-                <button onclick="logout()" class="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-rose-500/20 border border-white/5 hover:border-rose-500/30 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300">
+                <button onclick="logout()" class="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-rose-500/20 border border-white/5 hover:border-rose-500/30 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95">
                     Logout
                 </button>
             </div>
@@ -71,26 +81,26 @@
 
         <!-- KARTU TOTAL SALDO, TAGIHAN, PIUTANG -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
+            <div data-aos="fade-up" data-aos-delay="100" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-cyan-400/70 transition-colors">Total Saldo Bersih</p>
                 <h3 id="net-balance" class="text-3xl font-bold text-white tracking-tight">Rp 0</h3>
             </div>
-            <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
+            <div data-aos="fade-up" data-aos-delay="200" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-emerald-400/70 transition-colors">Total Saldo Bank</p>
                 <h3 id="total-balance" class="text-2xl font-semibold text-emerald-400 mt-1">Rp 0</h3>
             </div>
-            <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
+            <div data-aos="fade-up" data-aos-delay="300" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-rose-400/70 transition-colors">Total Tagihan / Cicilan</p>
                 <h3 id="total-bill" class="text-2xl font-semibold text-rose-400 mt-1">Rp 0</h3>
             </div>
-            <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
+            <div data-aos="fade-up" data-aos-delay="400" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-amber-400/70 transition-colors">Total Piutang</p>
                 <h3 id="total-piutang" class="text-2xl font-semibold text-amber-400 mt-1">Rp 0</h3>
             </div>
         </div>
 
         <!-- VISUALISASI GRAFIK ARUS KAS (REAL-TIME) -->
-        <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm">
+        <div data-aos="zoom-in" data-aos-delay="200" class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-lg font-semibold text-zinc-100 tracking-tight">Analitik Arus Kas (Real-time)</h3>
                 <span class="text-xs font-medium text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full">Aktivitas Terkini</span>
@@ -104,10 +114,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- 1. Form Transaksi -->
-            <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
+            <div data-aos="fade-up" data-aos-delay="100" class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
                     <h3 class="text-base font-semibold mb-6 text-cyan-400 flex items-center gap-2">
-                        <span>➕</span> Tambah Transaksi
+                        <span class="animate-bounce">➕</span> Tambah Transaksi
                     </h3>
                     <form id="transaction-form" onsubmit="submitTransaction(event)" class="space-y-4">
                         <div>
@@ -141,12 +151,12 @@
                     </form>
                 </div>
                 <div class="mt-8">
-                    <button type="submit" form="transaction-form" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-cyan-500/20">Simpan Transaksi</button>
+                    <button type="submit" form="transaction-form" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-cyan-500/20 transform hover:-translate-y-1">Simpan Transaksi</button>
                 </div>
             </div>
 
             <!-- 2. Form Tagihan / Cicilan -->
-            <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
+            <div data-aos="fade-up" data-aos-delay="200" class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
                     <h3 class="text-base font-semibold mb-6 text-rose-400 flex items-center gap-2">
                         <span>📋</span> Tambah Tagihan / Cicilan
@@ -171,12 +181,12 @@
                     </form>
                 </div>
                 <div class="mt-8">
-                    <button type="submit" form="bill-form" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-rose-500/20">Simpan Tagihan</button>
+                    <button type="submit" form="bill-form" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-rose-500/20 transform hover:-translate-y-1">Simpan Tagihan</button>
                 </div>
             </div>
 
             <!-- 3. Form Piutang -->
-            <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
+            <div data-aos="fade-up" data-aos-delay="300" class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
                     <h3 class="text-base font-semibold mb-6 text-amber-400 flex items-center gap-2">
                         <span>🤝</span> Tambah Piutang
@@ -193,7 +203,7 @@
                     </form>
                 </div>
                 <div class="mt-8">
-                    <button type="submit" form="piutang-form" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-amber-500/20">Simpan Piutang</button>
+                    <button type="submit" form="piutang-form" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-amber-500/20 transform hover:-translate-y-1">Simpan Piutang</button>
                 </div>
             </div>
 
@@ -203,7 +213,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
             
             <!-- Riwayat Transaksi -->
-            <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
+            <div data-aos="fade-up" data-aos-delay="100" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
                 <h3 class="text-lg font-semibold mb-4 text-cyan-400">Riwayat Transaksi Terbaru</h3>
                 <div class="overflow-x-auto max-h-96 overflow-y-auto pr-2">
                     <table class="w-full text-left text-sm">
@@ -223,7 +233,7 @@
             </div>
 
             <!-- Daftar Akun / Dompet -->
-            <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
+            <div data-aos="fade-up" data-aos-delay="200" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
                 <h3 class="text-lg font-semibold mb-4 text-cyan-400">Daftar Akun / Dompet</h3>
                 <div id="accounts-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
                     <p class="text-zinc-600 text-sm text-center py-6">Memuat akun...</p>
@@ -231,7 +241,7 @@
             </div>
 
             <!-- Daftar Tagihan & Cicilan -->
-            <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
+            <div data-aos="fade-up" data-aos-delay="300" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
                 <h3 class="text-lg font-semibold mb-4 text-rose-400">Daftar Tagihan & Cicilan</h3>
                 <div class="overflow-x-auto max-h-96 overflow-y-auto pr-2">
                     <table class="w-full text-left text-sm">
@@ -251,7 +261,7 @@
             </div>
 
             <!-- Daftar Piutang -->
-            <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
+            <div data-aos="fade-up" data-aos-delay="400" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
                 <h3 class="text-lg font-semibold mb-4 text-amber-400">Daftar Piutang</h3>
                 <div class="overflow-x-auto max-h-96 overflow-y-auto pr-2">
                     <table class="w-full text-left text-sm">
@@ -295,6 +305,10 @@
             </form>
         </div>
     </div>
+
+    <!-- AOS & Lenis Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.39/dist/lenis.min.js"></script>
 
     <script>
         // SATPAM JWT TOKEN: Cek apakah user sudah punya token karcis masuk
@@ -687,45 +701,60 @@
 
         loadDashboard();
     </script>
+    
     <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const loader = document.getElementById("page-loader");
-        
-        // 1. Efek Fade-Out saat halaman selesai dimuat
-        setTimeout(() => {
-            loader.classList.remove("opacity-100");
-            loader.classList.add("opacity-0");
+        // Inisialisasi Lenis Smooth Scroll
+        const lenis = new Lenis({
+            duration: 1.2, 
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+            smooth: true,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // Inisialisasi animasi gulir (Scroll Animation) dengan AOS
+        AOS.init({
+            once: true, // Animasi hanya berjalan sekali saat di-scroll
+            offset: 50, // Mulai animasi ketika elemen berjarak 50px dari bawah layar
+        });
+
+        // Script Page Loader (Fade-in / Fade-out)
+        document.addEventListener("DOMContentLoaded", () => {
+            const loader = document.getElementById("page-loader");
             
-            // Hilangkan elemen setelah transisi selesai (500ms)
             setTimeout(() => {
-                loader.style.display = "none";
-            }, 500);
-        }, 300); // Sedikit jeda agar logo terlihat elegan sebelum hilang
-
-        // 2. Efek Fade-In saat tombol/link diklik untuk pindah halaman
-        document.querySelectorAll("a").forEach(link => {
-            link.addEventListener("click", function(e) {
-                const href = this.getAttribute("href");
+                loader.classList.remove("opacity-100");
+                loader.classList.add("opacity-0");
                 
-                // Cek apakah link valid dan bukan link anchor (seperti #services)
-                if (href && !href.startsWith("#") && this.target !== "_blank") {
-                    e.preventDefault(); // Cegah pindah halaman secara instan
-                    
-                    loader.style.display = "flex";
-                    // Sedikit trik agar CSS transition berjalan mulus
-                    setTimeout(() => {
-                        loader.classList.remove("opacity-0");
-                        loader.classList.add("opacity-100");
-                    }, 10);
+                setTimeout(() => {
+                    loader.style.display = "none";
+                }, 500);
+            }, 300);
 
-                    // Pindah ke halaman baru setelah layar kembali gelap (500ms)
-                    setTimeout(() => {
-                        window.location.href = href;
-                    }, 500);
-                }
+            document.querySelectorAll("a").forEach(link => {
+                link.addEventListener("click", function(e) {
+                    const href = this.getAttribute("href");
+                    
+                    if (href && !href.startsWith("#") && this.target !== "_blank") {
+                        e.preventDefault(); 
+                        
+                        loader.style.display = "flex";
+                        setTimeout(() => {
+                            loader.classList.remove("opacity-0");
+                            loader.classList.add("opacity-100");
+                        }, 10);
+
+                        setTimeout(() => {
+                            window.location.href = href;
+                        }, 500);
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
