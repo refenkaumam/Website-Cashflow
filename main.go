@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -99,15 +101,44 @@ type User struct {
 
 var db *sql.DB
 
+// toDSN mengubah connection string format URL (mysql://user:pass@host:port/db)
+// jadi format DSN yang dibutuhkan driver Go (user:pass@tcp(host:port)/db).
+// Kalau input sudah dalam format DSN, dikembalikan apa adanya.
+func toDSN(raw string) string {
+	if !strings.HasPrefix(raw, "mysql://") {
+		return raw // sudah format DSN, tidak perlu diubah
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		log.Fatal("DATABASE_URL tidak valid: ", err)
+	}
+
+	user := u.User.Username()
+	pass, _ := u.User.Password()
+	host := u.Host
+	dbName := strings.TrimPrefix(u.Path, "/")
+
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s", user, pass, host, dbName)
+}
+
 func main() {
+	// Load file .env kalau ada (buat development lokal).
+	// Di Railway file .env tidak ada, jadi baris ini akan gagal diam-diam
+	// dan lanjut baca env var langsung dari dashboard Railway seperti biasa.
+	if err := godotenv.Load(); err != nil {
+		log.Println("Info: file .env tidak ditemukan, pakai environment variable sistem (normal kalau ini di Railway).")
+	}
+
 	mysql.RegisterTLSConfig("custom", &tls.Config{
 		InsecureSkipVerify: true,
 	})
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		log.Fatal("DATABASE_URL belum diset di environment variable!")
+		log.Fatal("DATABASE_URL belum diset di environment variable! (Kalau di lokal, cek file .env kamu. Kalau di Railway, cek tab Variables.)")
 	}
+	dbURL = toDSN(dbURL)
 
 	var err error
 	db, err = sql.Open("mysql", dbURL)
