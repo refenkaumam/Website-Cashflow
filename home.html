@@ -17,6 +17,13 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; overflow-x: hidden; }
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
         summary::-webkit-details-marker { display: none; }
+
+        /* Konfigurasi CSS Lenis Smooth Scroll */
+        html.lenis { height: auto; }
+        .lenis.lenis-smooth { scroll-behavior: auto !important; }
+        .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+        .lenis.lenis-stopped { overflow: hidden; }
+        .lenis.lenis-scrolling iframe { pointer-events: none; }
     </style>
 </head>
 <body class="text-zinc-100">
@@ -160,8 +167,24 @@
 
     <!-- AOS Animation Library JS -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- Lenis Smooth Scroll Library JS -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.39/dist/lenis.min.js"></script>
 
     <script>
+        // Inisialisasi Lenis Smooth Scroll
+        const lenis = new Lenis({
+            duration: 1.2, 
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+            smooth: true,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
         // Inisialisasi animasi gulir (Scroll Animation)
         AOS.init({
             once: true, // Animasi hanya berjalan sekali saat di-scroll ke bawah
