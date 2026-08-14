@@ -28,7 +28,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// Struct baru untuk menerima data tambah dompet/akun
+// Struct untuk menerima data tambah dompet/akun
 type AccountRequest struct {
 	BankName string  `json:"bank_name"`
 	Balance  float64 `json:"balance"`
@@ -100,9 +100,7 @@ type User struct {
 
 var db *sql.DB
 
-// toDSN mengubah connection string format URL (mysql://user:pass@host:port/db)
-// jadi format DSN yang dibutuhkan driver Go (user:pass@tcp(host:port)/db).
-// Kalau input sudah dalam format DSN, dikembalikan apa adanya.
+// toDSN mengubah format connection string URL Railway jadi DSN Go yang aman
 func toDSN(raw string) string {
 	if !strings.HasPrefix(raw, "mysql://") {
 		return raw // sudah format DSN, tidak perlu diubah
@@ -116,9 +114,14 @@ func toDSN(raw string) string {
 	user := u.User.Username()
 	pass, _ := u.User.Password()
 	host := u.Host
+	
+	// Ambil nama database dari path, jika kosong gunakan default "railway"
 	dbName := strings.TrimPrefix(u.Path, "/")
+	if dbName == "" {
+		dbName = "railway"
+	}
 
-	return fmt.Sprintf("%s:%s@tcp(%s)/%s", user, pass, host, dbName)
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", user, pass, host, dbName)
 }
 
 func main() {
@@ -286,32 +289,27 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	var u User
 	json.NewDecoder(r.Body).Decode(&u)
 
-	// 1. Validasi Kolom Tidak Boleh Kosong
 	if u.Username == "" || u.Email == "" || u.Password == "" {
 		http.Error(w, "Username, Email, dan password tidak boleh kosong", http.StatusBadRequest)
 		return
 	}
 
-	// 2. Validasi Panjang Username (3 - 50 Karakter)
 	if len(u.Username) > 50 || len(u.Username) < 3 {
 		http.Error(w, "Username harus antara 3 - 50 karakter", http.StatusBadRequest)
 		return
 	}
 
-	// 3. Validasi Kekuatan Password (Minimal 8 Karakter)
 	if len(u.Password) < 8 {
 		http.Error(w, "Keamanan Lemah: Kata sandi minimal harus 8 karakter!", http.StatusBadRequest)
 		return
 	}
 
-	// 4. Enkripsi Password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Gagal mengenkripsi password", http.StatusInternalServerError)
 		return
 	}
 
-	// 5. Masukkan ke Database
 	res, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", u.Username, u.Email, string(hashedPassword))
 	if err != nil {
 		log.Println("DEBUG INSERT ERROR:", err)
@@ -319,7 +317,6 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// BUATKAN AKUN "DOMPET UTAMA" OTOMATIS
 	newUserID, _ := res.LastInsertId()
 	db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0.00, ?)", newUserID)
 
@@ -375,7 +372,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// --- Handler Cashflow (Data Terisolasi Berdasarkan User ID) ---
+// --- Handler Cashflow ---
 
 func handleAddAccount(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(int)
