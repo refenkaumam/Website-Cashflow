@@ -123,6 +123,11 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Railway!")
 
+	if len(u.Username) > 50 || len(u.Username) < 3 {
+    http.Error(w, "Username harus antara 3 - 50 karakter", http.StatusBadRequest)
+    return
+}
+
 	// TABEL USERS
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
