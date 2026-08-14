@@ -91,10 +91,9 @@ type PayBillRequest struct {
 	PaidAmount float64 `json:"paid_amount"`
 }
 
-// STRUKTUR USER DIPERBARUI: Menambahkan Email
 type User struct {
 	Username string `json:"username"`
-	Email    string `json:"email"` // <-- Kolom baru
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -122,11 +121,6 @@ func main() {
 		log.Fatal("Database tidak bisa di-ping:", err)
 	}
 	log.Println("Berhasil terhubung ke database Railway!")
-
-	if len(u.Username) > 50 || len(u.Username) < 3 {
-    http.Error(w, "Username harus antara 3 - 50 karakter", http.StatusBadRequest)
-    return
-}
 
 	// TABEL USERS
 	_, err = db.Exec(`
@@ -180,7 +174,7 @@ func main() {
 }
 
 // =========================================================================
-// FITUR KEAMANAN BARU: RATE LIMITER (ANTI SPAM / BRUTE FORCE)
+// FITUR KEAMANAN: RATE LIMITER (ANTI SPAM / BRUTE FORCE)
 // =========================================================================
 var (
 	ipRates = make(map[string]*rateData)
@@ -194,7 +188,6 @@ type rateData struct {
 
 func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Mengambil alamat IP pengguna yang sebenarnya (melewati Proxy Railway)
 		ip := r.RemoteAddr
 		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
 			ip = strings.Split(forwarded, ",")[0]
@@ -205,7 +198,6 @@ func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		rateMu.Lock()
 		v, exists := ipRates[ip]
 
-		// Jika IP baru atau sudah lewat 1 menit sejak reset terakhir
 		if !exists || time.Since(v.lastReset) > time.Minute {
 			ipRates[ip] = &rateData{count: 1, lastReset: time.Now()}
 			rateMu.Unlock()
@@ -213,11 +205,10 @@ func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Jika dalam 1 menit dia mencoba lebih dari 10 kali, BLOKIR SEMENTARA!
 		if v.count >= 10 {
 			rateMu.Unlock()
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.WriteHeader(http.StatusTooManyRequests) // Kode Error 429
+			w.WriteHeader(http.StatusTooManyRequests)
 			w.Write([]byte("Terlalu banyak percobaan. Harap tunggu 1 menit lagi karena alasan keamanan."))
 			return
 		}
@@ -227,7 +218,6 @@ func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		next(w, r)
 	}
 }
-// =========================================================================
 
 // --- MIDDLEWARE KEAMANAN JWT ---
 func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -257,7 +247,6 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// MENYISIPKAN USER ID KE DALAM REQUEST CONTEXT
 		ctx := context.WithValue(r.Context(), "userID", claims.UserID)
 		next(w, r.WithContext(ctx))
 	}
@@ -280,20 +269,26 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Validasi Kekuatan Password (Minimal 8 Karakter)
+	// 2. Validasi Panjang Username (3 - 50 Karakter)
+	if len(u.Username) > 50 || len(u.Username) < 3 {
+		http.Error(w, "Username harus antara 3 - 50 karakter", http.StatusBadRequest)
+		return
+	}
+
+	// 3. Validasi Kekuatan Password (Minimal 8 Karakter)
 	if len(u.Password) < 8 {
 		http.Error(w, "Keamanan Lemah: Kata sandi minimal harus 8 karakter!", http.StatusBadRequest)
 		return
 	}
 
-	// 3. Enkripsi Password
+	// 4. Enkripsi Password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Gagal mengenkripsi password", http.StatusInternalServerError)
 		return
 	}
 
-	// 4. Masukkan ke Database
+	// 5. Masukkan ke Database
 	res, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", u.Username, u.Email, string(hashedPassword))
 	if err != nil {
 		http.Error(w, "Pendaftaran Gagal: Username atau Email sudah digunakan", http.StatusConflict)
