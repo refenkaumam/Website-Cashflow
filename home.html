@@ -10,13 +10,15 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; }
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        /* Menghilangkan panah default bawaan browser pada summary */
+        summary::-webkit-details-marker { display: none; }
     </style>
 </head>
 <body class="text-zinc-100">
     <!-- Elegant Page Loader -->
-<div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
-    <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
-</div>
+    <div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
+        <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
+    </div>
 
     <!-- Navbar -->
     <nav class="max-w-7xl mx-auto px-8 py-8 flex justify-between items-center">
@@ -82,6 +84,70 @@
                     <div class="text-zinc-500 text-sm uppercase tracking-widest">Sync Data Cepat</div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section (BARU) -->
+    <section id="faq" class="max-w-7xl mx-auto px-8 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Pertanyaan yang Sering Diajukan</h2>
+            <p class="text-zinc-400">Temukan jawaban cepat untuk pertanyaan seputar CashFlow.</p>
+        </div>
+        
+        <div class="max-w-3xl mx-auto space-y-4">
+            
+            <!-- Pertanyaan 1 -->
+            <details class="glass-card rounded-2xl group overflow-hidden">
+                <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-6 text-base md:text-lg text-white">
+                    <span>Apakah data keuangan saya aman di CashFlow?</span>
+                    <span class="transition-transform duration-300 group-open:rotate-180 text-cyan-500">
+                        <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                </summary>
+                <div class="text-zinc-400 text-sm px-6 pb-6 leading-relaxed border-t border-white/5 pt-4 mt-2">
+                    Tentu saja! Kami menggunakan sistem login yang dilindungi <i>password hashing</i> (Bcrypt) dan JWT (JSON Web Token) terkini. Setiap aktivitas dan data saldo Anda sepenuhnya terisolasi, yang berarti tidak ada pengguna lain yang dapat melihat data Anda.
+                </div>
+            </details>
+
+            <!-- Pertanyaan 2 -->
+            <details class="glass-card rounded-2xl group overflow-hidden">
+                <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-6 text-base md:text-lg text-white">
+                    <span>Apakah CashFlow sepenuhnya gratis?</span>
+                    <span class="transition-transform duration-300 group-open:rotate-180 text-cyan-500">
+                        <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                </summary>
+                <div class="text-zinc-400 text-sm px-6 pb-6 leading-relaxed border-t border-white/5 pt-4 mt-2">
+                    Ya, fitur dasar CashFlow dapat Anda gunakan secara gratis. Anda dapat mendaftar tanpa kartu kredit dan langsung mengelola berbagai dompet digital, rekening, serta tagihan bulanan Anda.
+                </div>
+            </details>
+
+            <!-- Pertanyaan 3 -->
+            <details class="glass-card rounded-2xl group overflow-hidden">
+                <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-6 text-base md:text-lg text-white">
+                    <span>Bisakah saya menambahkan lebih dari satu rekening/dompet?</span>
+                    <span class="transition-transform duration-300 group-open:rotate-180 text-cyan-500">
+                        <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                </summary>
+                <div class="text-zinc-400 text-sm px-6 pb-6 leading-relaxed border-t border-white/5 pt-4 mt-2">
+                    Sangat bisa! Anda dapat menambahkan rekening bank (seperti BCA, Mandiri, dll), dompet digital (OVO, Dana), maupun dompet tunai tanpa batas langsung dari tombol "+ Tambah Dompet" di dashboard Anda.
+                </div>
+            </details>
+
+            <!-- Pertanyaan 4 -->
+            <details class="glass-card rounded-2xl group overflow-hidden">
+                <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-6 text-base md:text-lg text-white">
+                    <span>Bagaimana cara kerja fitur manajemen tagihan?</span>
+                    <span class="transition-transform duration-300 group-open:rotate-180 text-cyan-500">
+                        <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                </summary>
+                <div class="text-zinc-400 text-sm px-6 pb-6 leading-relaxed border-t border-white/5 pt-4 mt-2">
+                    Saat Anda memasukkan tagihan (misal: Cicilan Paylater), sistem akan mencatat total tenor dan beban bulanannya. Saat Anda melakukan pembayaran (aksi di dashboard), saldo Anda akan terpotong secara otomatis dan tenor akan berkurang dengan sendirinya.
+                </div>
+            </details>
+
         </div>
     </section>
 
