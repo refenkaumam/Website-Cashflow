@@ -28,6 +28,10 @@
     </script>
 </head>
 <body class="bg-[#09090b] text-zinc-100 min-h-screen font-sans antialiased selection:bg-cyan-500/30 overflow-hidden flex">
+    <!-- Elegant Page Loader -->
+<div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
+    <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
+</div>
 
     <!-- BAGIAN KIRI: Form Login/Register -->
     <div class="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 lg:p-24 relative z-10">
@@ -163,5 +167,45 @@
             }
         }
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const loader = document.getElementById("page-loader");
+        
+        // 1. Efek Fade-Out saat halaman selesai dimuat
+        setTimeout(() => {
+            loader.classList.remove("opacity-100");
+            loader.classList.add("opacity-0");
+            
+            // Hilangkan elemen setelah transisi selesai (500ms)
+            setTimeout(() => {
+                loader.style.display = "none";
+            }, 500);
+        }, 300); // Sedikit jeda agar logo terlihat elegan sebelum hilang
+
+        // 2. Efek Fade-In saat tombol/link diklik untuk pindah halaman
+        document.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", function(e) {
+                const href = this.getAttribute("href");
+                
+                // Cek apakah link valid dan bukan link anchor (seperti #services)
+                if (href && !href.startsWith("#") && this.target !== "_blank") {
+                    e.preventDefault(); // Cegah pindah halaman secara instan
+                    
+                    loader.style.display = "flex";
+                    // Sedikit trik agar CSS transition berjalan mulus
+                    setTimeout(() => {
+                        loader.classList.remove("opacity-0");
+                        loader.classList.add("opacity-100");
+                    }, 10);
+
+                    // Pindah ke halaman baru setelah layar kembali gelap (500ms)
+                    setTimeout(() => {
+                        window.location.href = href;
+                    }, 500);
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>
