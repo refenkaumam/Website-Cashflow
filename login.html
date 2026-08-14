@@ -28,10 +28,14 @@
     </script>
 </head>
 <body class="bg-[#09090b] text-zinc-100 min-h-screen font-sans antialiased selection:bg-cyan-500/30 overflow-hidden flex">
+    
     <!-- Elegant Page Loader -->
-<div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
-    <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
-</div>
+    <div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
+            <p id="loader-text" class="text-zinc-500 text-xs mt-3 tracking-widest uppercase hidden opacity-0 transition-opacity duration-700">Menyiapkan Dasbor Keamanan...</p>
+        </div>
+    </div>
 
     <!-- BAGIAN KIRI: Form Login/Register -->
     <div class="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 lg:p-24 relative z-10">
@@ -63,7 +67,9 @@
                     <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Kata Sandi</label>
                     <input type="password" id="password" required placeholder="••••••••" class="w-full bg-[#09090b] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-700">
                 </div>
-                <button type="submit" id="submit-btn" class="w-full bg-zinc-100 hover:bg-white text-zinc-900 font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] mt-4">Masuk ke Akun</button>
+                <button type="submit" id="submit-btn" class="w-full bg-zinc-100 hover:bg-white text-zinc-900 font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] mt-4 flex items-center justify-center gap-2">
+                    <span id="btn-text">Masuk ke Akun</span>
+                </button>
             </form>
 
             <div class="mt-8 text-center text-sm border-t border-white/5 pt-6">
@@ -118,7 +124,7 @@
             isLogin = !isLogin;
             document.getElementById('form-title').innerText = isLogin ? 'Selamat Datang!' : 'Buat Akun Baru';
             document.getElementById('form-subtitle').innerText = isLogin ? 'Silakan masuk untuk melanjutkan ke dashboard.' : 'Mulai kelola keuanganmu dengan lebih baik.';
-            document.getElementById('submit-btn').innerText = isLogin ? 'Masuk ke Akun' : 'Daftar Sekarang';
+            document.getElementById('btn-text').innerText = isLogin ? 'Masuk ke Akun' : 'Daftar Sekarang';
             document.getElementById('toggle-text').innerText = isLogin ? 'Baru pertama kali?' : 'Sudah punya akun?';
             document.getElementById('toggle-btn').innerText = isLogin ? 'Buat Akun Gratis' : 'Masuk di sini';
             document.getElementById('error-msg').classList.add('hidden');
@@ -130,11 +136,17 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const endpoint = isLogin ? '/api/login' : '/api/register';
+            const btn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
 
             const errDiv = document.getElementById('error-msg');
             const succDiv = document.getElementById('success-msg');
             errDiv.classList.add('hidden');
             succDiv.classList.add('hidden');
+
+            // Ubah tombol jadi status loading sementara
+            btn.disabled = true;
+            btnText.innerText = 'Memproses...';
 
             try {
                 const response = await fetch(endpoint, {
@@ -149,21 +161,51 @@
                         // SIMPAN TOKEN JWT DAN USERNAME KE BROWSER
                         localStorage.setItem('cashflow_token', data.token);
                         localStorage.setItem('cashflow_username', username);
-                        window.location.href = '/dashboard';
+                        
+                        // === MULAI EFEK JEDA 5 DETIK ELEGAN ===
+                        const loader = document.getElementById("page-loader");
+                        const loaderText = document.getElementById("loader-text");
+                        
+                        loader.style.display = "flex";
+                        
+                        // Berikan efek transisi lembut
+                        setTimeout(() => {
+                            loader.classList.remove("opacity-0");
+                            loader.classList.add("opacity-100");
+                        }, 10);
+
+                        // Munculkan teks "Menyiapkan Dasbor Keamanan..." sedikit terlambat agar makin dramatis
+                        setTimeout(() => {
+                            loaderText.classList.remove("hidden");
+                            setTimeout(() => loaderText.classList.remove("opacity-0"), 50);
+                        }, 800);
+
+                        // Tunggu 5 detik lalu redirect ke dasbor
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 5000);
+                        // === SELESAI EFEK ===
+
                     } else {
                         succDiv.innerText = 'Registrasi berhasil! Silakan login untuk memulai.';
                         succDiv.classList.remove('hidden');
                         document.getElementById('auth-form').reset();
+                        btn.disabled = false;
+                        btnText.innerText = 'Daftar Sekarang';
                         toggleMode();
                     }
                 } else {
                     const errText = await response.text();
                     errDiv.innerText = errText || 'Terjadi kesalahan pada sistem.';
                     errDiv.classList.remove('hidden');
+                    btn.disabled = false;
+                    btnText.innerText = isLogin ? 'Masuk ke Akun' : 'Daftar Sekarang';
                 }
             } catch (err) {
                 errDiv.innerText = 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
                 errDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btnText.innerText = isLogin ? 'Masuk ke Akun' : 'Daftar Sekarang';
             }
         }
     </script>
@@ -171,7 +213,7 @@
     document.addEventListener("DOMContentLoaded", () => {
         const loader = document.getElementById("page-loader");
         
-        // 1. Efek Fade-Out saat halaman selesai dimuat
+        // 1. Efek Fade-Out saat halaman selesai dimuat (untuk load awal)
         setTimeout(() => {
             loader.classList.remove("opacity-100");
             loader.classList.add("opacity-0");
