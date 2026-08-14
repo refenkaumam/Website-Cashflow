@@ -16,7 +16,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -123,20 +122,13 @@ func toDSN(raw string) string {
 }
 
 func main() {
-	// Load file .env kalau ada (buat development lokal).
-	// Di Railway file .env tidak ada, jadi baris ini akan gagal diam-diam
-	// dan lanjut baca env var langsung dari dashboard Railway seperti biasa.
-	if err := godotenv.Load(); err != nil {
-		log.Println("Info: file .env tidak ditemukan, pakai environment variable sistem (normal kalau ini di Railway).")
-	}
-
 	mysql.RegisterTLSConfig("custom", &tls.Config{
 		InsecureSkipVerify: true,
 	})
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		log.Fatal("DATABASE_URL belum diset di environment variable! (Kalau di lokal, cek file .env kamu. Kalau di Railway, cek tab Variables.)")
+		log.Fatal("DATABASE_URL belum diset di environment variable Railway!")
 	}
 	dbURL = toDSN(dbURL)
 
@@ -322,7 +314,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	// 5. Masukkan ke Database
 	res, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", u.Username, u.Email, string(hashedPassword))
 	if err != nil {
-		log.Println("DEBUG INSERT ERROR:", err) // <-- sementara, buat lihat error asli di terminal
+		log.Println("DEBUG INSERT ERROR:", err)
 		http.Error(w, "Pendaftaran Gagal: Username atau Email sudah digunakan", http.StatusConflict)
 		return
 	}
