@@ -8,10 +8,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// Kunci rahasia JWT (Pastikan aman di lingkungan produksi)
+var jwtKey = []byte("rahasia-super-aman-cashflow-2026")
+
+type Claims struct {
+	Username string `json:"username"`
+	jwt.RegisteredClaims
+}
 
 type Transaction struct {
 	AccountID       int     `json:"account_id"`
@@ -116,7 +127,7 @@ func main() {
 		log.Println("Tabel users siap digunakan!")
 	}
 
-	// ROUTING HALAMAN & API
+	// ROUTING HALAMAN
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "login.html")
 	})
@@ -125,19 +136,19 @@ func main() {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	// Endpoint Auth
+	// Endpoint Publik (Auth)
 	http.HandleFunc("/api/register", handleRegister)
 	http.HandleFunc("/api/login", handleLogin)
 
-	// Endpoint Aplikasi Cashflow
-	http.HandleFunc("/api/transaction", handleTransaction)
-	http.HandleFunc("/api/transaction/delete", handleDeleteTransaction)
-	http.HandleFunc("/api/history", handleHistory)
-	http.HandleFunc("/api/bill", handleBill)
-	http.HandleFunc("/api/bill/delete", handleDeleteBill)
-	http.HandleFunc("/api/bill/pay", handlePayBill)
-	http.HandleFunc("/api/piutang", handlePiutang)
-	http.HandleFunc("/api/piutang/delete", handleDeletePiutang)
+	// Endpoint Privat (Dilindungi Satpam Middleware JWT)
+	http.HandleFunc("/api/transaction", authMiddleware(handleTransaction))
+	http.HandleFunc("/api/transaction/delete", authMiddleware(handleDeleteTransaction))
+	http.HandleFunc("/api/history", authMiddleware(handleHistory))
+	http.HandleFunc("/api/bill", authMiddleware(handleBill))
+	http.HandleFunc("/api/bill/delete", authMiddleware(handleDeleteBill))
+	http.HandleFunc("/api/bill/pay", authMiddleware(handlePayBill))
+	http.HandleFunc("/api/piutang", authMiddleware(handlePiutang))
+	http.HandleFunc("/api/piutang/delete", authMiddleware(handleDeletePiutang))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -146,6 +157,38 @@ func main() {
 
 	log.Println("Server berjalan di port", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+// --- MIDDLEWARE KEAMANAN JWT ---
+func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Akses ditolak: Token tidak ditemukan", http.StatusUnauthorized)
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		claims := &Claims{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			http.Error(w, "Akses ditolak: Token tidak valid atau kedaluwarsa", http.StatusUnauthorized)
+			return
+		}
+
+		next(w, r)
+	}
 }
 
 // Handler Register
@@ -180,7 +223,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Registrasi berhasil"})
 }
 
-// Handler Login
+// Handler Login (Menerbitkan Token JWT)
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -204,17 +247,31 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Buat Token JWT berlaku selama 24 jam
+	expirationTime := time.Now().Add(24 * time.Hour)
+	claims := &Claims{
+		Username: u.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		http.Error(w, "Gagal membuat token sesi", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Login berhasil"})
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Login berhasil",
+		"token":   tokenString,
+	})
 }
 
 // --- Handler Cashflow ---
 func handleTransaction(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	if r.Method == http.MethodOptions {
-		return
-	}
 	var t Transaction
 	json.NewDecoder(r.Body).Decode(&t)
 	tx, _ := db.Begin()
@@ -235,11 +292,6 @@ func handleTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
-	if r.Method == http.MethodOptions {
-		return
-	}
 	idStr := r.URL.Query().Get("id")
 	tx, _ := db.Begin()
 	var accID int
@@ -260,11 +312,6 @@ func handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleBill(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	if r.Method == http.MethodOptions {
-		return
-	}
 	var b Bill
 	json.NewDecoder(r.Body).Decode(&b)
 	if b.Tenor > 0 {
@@ -275,21 +322,11 @@ func handleBill(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteBill(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
-	if r.Method == http.MethodOptions {
-		return
-	}
 	db.Exec("DELETE FROM bills WHERE id = ?", r.URL.Query().Get("id"))
 	w.WriteHeader(http.StatusOK)
 }
 
 func handlePayBill(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	if r.Method == http.MethodOptions {
-		return
-	}
 	var req PayBillRequest
 	json.NewDecoder(r.Body).Decode(&req)
 	tx, _ := db.Begin()
@@ -318,11 +355,6 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlePiutang(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	if r.Method == http.MethodOptions {
-		return
-	}
 	var p Piutang
 	json.NewDecoder(r.Body).Decode(&p)
 	db.Exec("INSERT INTO piutang (name, amount) VALUES (?, ?)", p.Name, p.Amount)
@@ -330,22 +362,15 @@ func handlePiutang(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeletePiutang(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
-	if r.Method == http.MethodOptions {
-		return
-	}
 	db.Exec("DELETE FROM piutang WHERE id = ?", r.URL.Query().Get("id"))
 	w.WriteHeader(http.StatusOK)
 }
 
 func handleHistory(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 	var data DashboardData
 	var totalBal, totalBill, totalPiutang float64
 
-	// Ambil Data Akun
 	rowsAcc, err := db.Query("SELECT id, bank_name, balance FROM accounts")
 	if err == nil {
 		for rowsAcc.Next() {
@@ -357,7 +382,6 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsAcc.Close()
 	}
 
-	// Ambil Data Tagihan
 	rowsBill, err := db.Query("SELECT id, platform, item_name, monthly_amount, tenor, total_amount FROM bills")
 	if err == nil {
 		for rowsBill.Next() {
@@ -369,7 +393,6 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsBill.Close()
 	}
 
-	// Ambil Data Piutang
 	rowsPiutang, err := db.Query("SELECT id, name, amount FROM piutang")
 	if err == nil {
 		for rowsPiutang.Next() {
@@ -381,7 +404,6 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsPiutang.Close()
 	}
 
-	// Ambil Data Transaksi (Tanggal diformat langsung di SQL)
 	rowsTx, err := db.Query("SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i') FROM transactions t JOIN accounts a ON t.account_id = a.id ORDER BY t.created_at DESC LIMIT 50")
 	if err == nil {
 		for rowsTx.Next() {
@@ -392,7 +414,6 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsTx.Close()
 	}
 
-	// Hitung Total Metrik
 	data.TotalBalance = totalBal
 	data.TotalBill = totalBill
 	data.TotalPiutang = totalPiutang

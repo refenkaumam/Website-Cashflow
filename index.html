@@ -40,7 +40,7 @@
     
     <div class="max-w-7xl mx-auto space-y-8">
         
-        <!-- HEADER & SAPAAN -->
+        <!-- WIDGET SAPAAN & MOTIVASI AI -->
         <header class="relative overflow-hidden bg-zinc-900/40 border border-white/5 backdrop-blur-xl p-8 rounded-3xl flex flex-col md:flex-row justify-between items-center shadow-2xl">
             <div class="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none"></div>
             
@@ -49,18 +49,21 @@
                     <h1 class="text-2xl font-bold tracking-tight text-white">CashFlow<span class="text-cyan-500">.</span></h1>
                     <span class="bg-zinc-800 text-zinc-300 text-xs px-3 py-1 rounded-full border border-white/10 font-medium">Personal Finance</span>
                 </div>
-                <h2 id="welcome-user" class="text-lg text-zinc-300">Halo, Refenka! 👋</h2>
+                <h2 id="welcome-user" class="text-lg text-zinc-300">Halo, Sobat Finansial! 👋</h2>
                 <p id="ai-motivation" class="text-zinc-500 text-sm italic mt-1 max-w-xl">"Memuat motivasi menabung hari ini..."</p>
             </div>
             
             <div class="relative z-10 mt-6 md:mt-0 flex items-center gap-4">
-                <button onclick="logout()" class="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-red-500/20 border border-white/5 hover:border-red-500/30 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300">
-                    Keluar Sesi
+                <div class="hidden md:block bg-white/5 px-4 py-2 rounded-2xl backdrop-blur-md text-xs border border-white/10 text-zinc-400">
+                    🤖 AI Financial Companion
+                </div>
+                <button onclick="logout()" class="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-rose-500/20 border border-white/5 hover:border-rose-500/30 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300">
+                    Logout
                 </button>
             </div>
         </header>
 
-        <!-- GRID METRIK -->
+        <!-- KARTU TOTAL SALDO, TAGIHAN, PIUTANG -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-cyan-400/70 transition-colors">Total Saldo Bersih</p>
@@ -68,19 +71,19 @@
             </div>
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-emerald-400/70 transition-colors">Total Saldo Bank</p>
-                <h3 id="total-balance" class="text-2xl font-semibold text-zinc-200 mt-1">Rp 0</h3>
+                <h3 id="total-balance" class="text-2xl font-semibold text-emerald-400 mt-1">Rp 0</h3>
             </div>
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-rose-400/70 transition-colors">Total Tagihan / Cicilan</p>
-                <h3 id="total-bill" class="text-2xl font-semibold text-zinc-200 mt-1">Rp 0</h3>
+                <h3 id="total-bill" class="text-2xl font-semibold text-rose-400 mt-1">Rp 0</h3>
             </div>
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm hover:border-white/10 transition-colors group">
                 <p class="text-zinc-500 text-sm font-medium tracking-wide mb-1 group-hover:text-amber-400/70 transition-colors">Total Piutang</p>
-                <h3 id="total-piutang" class="text-2xl font-semibold text-zinc-200 mt-1">Rp 0</h3>
+                <h3 id="total-piutang" class="text-2xl font-semibold text-amber-400 mt-1">Rp 0</h3>
             </div>
         </div>
 
-        <!-- VISUALISASI GRAFIK REAL-TIME -->
+        <!-- VISUALISASI GRAFIK ARUS KAS (REAL-TIME) -->
         <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-lg font-semibold text-zinc-100 tracking-tight">Analitik Arus Kas (Real-time)</h3>
@@ -91,18 +94,19 @@
             </div>
         </div>
 
-        <!-- BAGIAN INPUT FORM -->
+        <!-- BAGIAN INPUT FORM (3 Kolom) -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
             <!-- 1. Form Transaksi -->
             <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
-                    <h3 class="text-base font-semibold mb-6 text-zinc-100 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-cyan-500"></span> Tambah Transaksi
+                    <h3 class="text-base font-semibold mb-6 text-cyan-400 flex items-center gap-2">
+                        <span>➕</span> Tambah Transaksi
                     </h3>
                     <form id="transaction-form" onsubmit="submitTransaction(event)" class="space-y-4">
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Jenis</label>
-                            <select id="tx-type" onchange="toggleTargetAccount()" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all">
+                            <select id="tx-type" onchange="toggleTargetAccount()" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all">
                                 <option value="INCOME">Pemasukan</option>
                                 <option value="EXPENSE">Pengeluaran</option>
                                 <option value="TRANSFER">Transfer</option>
@@ -110,99 +114,99 @@
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Dari Akun</label>
-                            <select id="tx-account" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 transition-all"></select>
+                            <select id="tx-account" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all"></select>
                         </div>
                         <div id="target-account-wrapper" class="hidden">
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Ke Akun Tujuan</label>
-                            <select id="tx-target-account" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 transition-all"></select>
+                            <select id="tx-target-account" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all"></select>
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Jumlah (Rp)</label>
-                            <input type="number" id="tx-amount" required placeholder="0" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 placeholder:text-zinc-700 transition-all">
+                            <input type="number" id="tx-amount" required placeholder="50000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all">
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Biaya Admin</label>
-                            <input type="number" id="tx-admin" value="0" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 transition-all">
+                            <input type="number" id="tx-admin" value="0" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all">
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Keterangan</label>
-                            <input type="text" id="tx-desc" required placeholder="Catatan singkat..." class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 placeholder:text-zinc-700 transition-all">
+                            <input type="text" id="tx-desc" required placeholder="Makan siang" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all">
                         </div>
                     </form>
                 </div>
                 <div class="mt-8">
-                    <button type="submit" form="transaction-form" class="w-full bg-zinc-100 hover:bg-white text-zinc-900 font-semibold py-3 rounded-xl text-sm transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]">Simpan Transaksi</button>
+                    <button type="submit" form="transaction-form" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-cyan-500/20">Simpan Transaksi</button>
                 </div>
             </div>
 
             <!-- 2. Form Tagihan / Cicilan -->
             <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
-                    <h3 class="text-base font-semibold mb-6 text-zinc-100 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-rose-500"></span> Tagihan Baru
+                    <h3 class="text-base font-semibold mb-6 text-rose-400 flex items-center gap-2">
+                        <span>📋</span> Tambah Tagihan / Cicilan
                     </h3>
                     <form id="bill-form" onsubmit="submitBill(event)" class="space-y-4">
                         <div>
-                            <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Platform / Kreditur</label>
-                            <input type="text" id="bill-platform" required placeholder="Nama instansi..." class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-500/50 placeholder:text-zinc-700 transition-all">
+                            <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Platform / Pemberi</label>
+                            <input type="text" id="bill-platform" required placeholder="Paylater / Bank" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-400 transition-all">
                         </div>
                         <div>
-                            <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Deskripsi</label>
-                            <input type="text" id="bill-item" required placeholder="Barang / Jasa" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-500/50 placeholder:text-zinc-700 transition-all">
+                            <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Nama Barang / Keperluan</label>
+                            <input type="text" id="bill-item" required placeholder="Beli HP / Elektronik" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-400 transition-all">
                         </div>
                         <div>
-                            <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Total Hutang (Rp)</label>
-                            <input type="number" id="bill-total" required placeholder="0" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-500/50 placeholder:text-zinc-700 transition-all">
+                            <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Total Tagihan (Rp)</label>
+                            <input type="number" id="bill-total" required placeholder="1200000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-400 transition-all">
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Tenor (Bulan)</label>
-                            <input type="number" id="bill-tenor" required placeholder="12" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-500/50 placeholder:text-zinc-700 transition-all">
+                            <input type="number" id="bill-tenor" required placeholder="12" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-400 transition-all">
                         </div>
                     </form>
                 </div>
                 <div class="mt-8">
-                    <button type="submit" form="bill-form" class="w-full bg-zinc-800 hover:bg-zinc-700 border border-white/5 text-zinc-100 font-semibold py-3 rounded-xl text-sm transition-all hover:border-rose-500/30 hover:text-rose-400">Simpan Tagihan</button>
+                    <button type="submit" form="bill-form" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-rose-500/20">Simpan Tagihan</button>
                 </div>
             </div>
 
             <!-- 3. Form Piutang -->
             <div class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
-                    <h3 class="text-base font-semibold mb-6 text-zinc-100 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Catat Piutang
+                    <h3 class="text-base font-semibold mb-6 text-amber-400 flex items-center gap-2">
+                        <span>🤝</span> Tambah Piutang
                     </h3>
                     <form id="piutang-form" onsubmit="submitPiutang(event)" class="space-y-4">
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Nama Peminjam</label>
-                            <input type="text" id="piutang-name" required placeholder="Nama rekan..." class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-500/50 placeholder:text-zinc-700 transition-all">
+                            <input type="text" id="piutang-name" required placeholder="Nama teman" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-400 transition-all">
                         </div>
                         <div>
-                            <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Total Piutang (Rp)</label>
-                            <input type="number" id="piutang-amount" required placeholder="0" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-500/50 placeholder:text-zinc-700 transition-all">
+                            <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Jumlah Piutang (Rp)</label>
+                            <input type="number" id="piutang-amount" required placeholder="100000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-400 transition-all">
                         </div>
                     </form>
                 </div>
                 <div class="mt-8">
-                    <button type="submit" form="piutang-form" class="w-full bg-zinc-800 hover:bg-zinc-700 border border-white/5 text-zinc-100 font-semibold py-3 rounded-xl text-sm transition-all hover:border-amber-500/30 hover:text-amber-400">Simpan Piutang</button>
+                    <button type="submit" form="piutang-form" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-amber-500/20">Simpan Piutang</button>
                 </div>
             </div>
 
         </div>
 
-        <!-- TABEL DATA -->
+        <!-- TABEL & DAFTAR (Riwayat, Akun, Tagihan, Piutang) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
             
             <!-- Riwayat Transaksi -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
-                <h3 class="text-base font-semibold mb-6 text-zinc-100">Riwayat Terkini</h3>
+                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Riwayat Transaksi Terbaru</h3>
                 <div class="overflow-x-auto max-h-96 overflow-y-auto pr-2">
-                    <table class="w-full text-left text-sm border-collapse">
+                    <table class="w-full text-left text-sm">
                         <thead>
                             <tr class="border-b border-white/10 text-zinc-500 uppercase tracking-wider text-[10px]">
-                                <th class="pb-3 font-medium">Informasi</th>
-                                <th class="pb-3 font-medium">Rekening</th>
-                                <th class="pb-3 font-medium text-right">Mutasi</th>
-                                <th class="pb-3 font-medium text-center"></th>
+                                <th class="pb-3 font-medium">Waktu & Ket</th>
+                                <th class="pb-3 font-medium">Akun</th>
+                                <th class="pb-3 font-medium text-right">Jumlah</th>
+                                <th class="pb-3 font-medium text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="transaction-table">
@@ -212,25 +216,25 @@
                 </div>
             </div>
 
-            <!-- Daftar Akun -->
+            <!-- Daftar Akun / Dompet -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
-                <h3 class="text-base font-semibold mb-6 text-zinc-100">Distribusi Kekayaan</h3>
-                <div id="accounts-list" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Daftar Akun / Dompet</h3>
+                <div id="accounts-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
                     <p class="text-zinc-600 text-sm text-center py-6">Memuat akun...</p>
                 </div>
             </div>
-            
-            <!-- Daftar Tagihan -->
+
+            <!-- Daftar Tagihan & Cicilan -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
-                <h3 class="text-base font-semibold mb-6 text-zinc-100">Kewajiban Tagihan</h3>
+                <h3 class="text-lg font-semibold mb-4 text-rose-400">Daftar Tagihan & Cicilan</h3>
                 <div class="overflow-x-auto max-h-96 overflow-y-auto pr-2">
-                    <table class="w-full text-left text-sm border-collapse">
+                    <table class="w-full text-left text-sm">
                         <thead>
                             <tr class="border-b border-white/10 text-zinc-500 uppercase tracking-wider text-[10px]">
-                                <th class="pb-3 font-medium">Detail Item</th>
-                                <th class="pb-3 font-medium">Per Bulan</th>
+                                <th class="pb-3 font-medium">Platform / Item</th>
+                                <th class="pb-3 font-medium">Cicilan/bln</th>
                                 <th class="pb-3 font-medium text-right">Sisa Total</th>
-                                <th class="pb-3 font-medium text-center"></th>
+                                <th class="pb-3 font-medium text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="bills-table">
@@ -242,14 +246,14 @@
 
             <!-- Daftar Piutang -->
             <div class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
-                <h3 class="text-base font-semibold mb-6 text-zinc-100">Hak Piutang</h3>
+                <h3 class="text-lg font-semibold mb-4 text-amber-400">Daftar Piutang</h3>
                 <div class="overflow-x-auto max-h-96 overflow-y-auto pr-2">
-                    <table class="w-full text-left text-sm border-collapse">
+                    <table class="w-full text-left text-sm">
                         <thead>
                             <tr class="border-b border-white/10 text-zinc-500 uppercase tracking-wider text-[10px]">
                                 <th class="pb-3 font-medium">Nama Peminjam</th>
                                 <th class="pb-3 font-medium text-right">Jumlah</th>
-                                <th class="pb-3 font-medium text-center"></th>
+                                <th class="pb-3 font-medium text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="piutang-table">
@@ -260,22 +264,38 @@
             </div>
 
         </div>
+
     </div>
 
     <script>
+        // SATPAM JWT TOKEN: Cek apakah user sudah punya token karcis masuk
+        const token = localStorage.getItem('cashflow_token');
+        if (!token) {
+            window.location.href = '/'; // Jika belum login, tendang kembali ke halaman login
+        }
+
+        // Header wajib yang membawa Token JWT ke Backend
+        const authHeaders = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+
         const motivations = [
-            "“Setiap nominal kecil yang kamu sisihkan adalah bentuk penghargaan untuk kerja kerasmu.”",
-            "“Investasi terbaik adalah investasi pada ketenangan pikiran bebas utang.”",
+            "“Jangan menabung apa yang tersisa setelah pengeluaran, tetapi keluarkan apa yang tersisa setelah menabung.” – Warren Buffett",
+            "“Celengan kecil hari ini adalah benteng pertahanan finansialmu di masa depan.”",
             "“Kendalikan uangmu, atau uang itu yang akan mengendalikanmu.”",
+            "“Setiap nominal kecil yang kamu sisihkan adalah bentuk penghargaan untuk kerja kerasmu.”",
+            "“Menabung bukan soal seberapa besar penghasilanmu, tapi seberapa konsisten kedisiplinanmu.”",
+            "“Investasi terbaik adalah investasi pada ketenangan pikiran bebas utang.”",
             "“Masa depan yang cerah dibangun dari keputusan finansial yang bijak hari ini.”"
         ];
-        
+
         const currentUsername = localStorage.getItem('cashflow_username') || 'Sobat Finansial';
         document.getElementById('welcome-user').innerText = `Halo, ${currentUsername}! 👋`;
         document.getElementById('ai-motivation').innerText = motivations[Math.floor(Math.random() * motivations.length)];
 
         function logout() {
-            localStorage.removeItem('cashflow_username');
+            localStorage.clear(); // Hapus seluruh sesi token & username
             window.location.href = '/';
         }
 
@@ -291,20 +311,19 @@
             }
         }
 
-        // --- KONFIGURASI CHART.JS REAL ---
+        // --- KONFIGURASI CHART.JS REAL-TIME ---
         let cashflowChartInstance = null;
 
         function renderChart(transactions) {
             const ctx = document.getElementById('cashflowChart').getContext('2d');
             
-            if(cashflowChartInstance) { cashflowChartInstance.destroy(); }
+            if (cashflowChartInstance) { cashflowChartInstance.destroy(); }
 
             let labels = [];
             let dataNominal = [];
 
             let recentTx = [];
             if (transactions && transactions.length > 0) {
-                // Ambil maks 10 transaksi terbaru dan balik urutannya (kiri = lama, kanan = baru)
                 recentTx = transactions.slice(0, 10).reverse();
             }
             
@@ -365,10 +384,19 @@
 
         async function loadDashboard() {
             try {
-                const response = await fetch('/api/history');
+                // Mengambil data dengan membawa Header Satpam Token JWT
+                const response = await fetch('/api/history', { headers: authHeaders });
+                
+                if (response.status === 401) {
+                    // Token kedaluwarsa atau tidak sah
+                    alert('Sesi Anda telah habis. Silakan login kembali.');
+                    logout();
+                    return;
+                }
+
                 const data = await response.json();
 
-                // Panggil renderChart menggunakan data transaksi asli dari API
+                // Render Grafik Real-time
                 renderChart(data.transactions);
 
                 document.getElementById('net-balance').innerText = `Rp ${data.net_balance.toLocaleString('id-ID')}`;
@@ -378,6 +406,7 @@
 
                 globalAccounts = data.balances || [];
 
+                // Dropdown Akun
                 const accSelect = document.getElementById('tx-account');
                 const targetAccSelect = document.getElementById('tx-target-account');
                 accSelect.innerHTML = '';
@@ -388,6 +417,7 @@
                     targetAccSelect.innerHTML += `<option value="${acc.id}">${acc.bank_name}</option>`;
                 });
 
+                // List Akun / Dompet
                 const accContainer = document.getElementById('accounts-list');
                 accContainer.innerHTML = '';
                 globalAccounts.forEach(acc => {
@@ -404,6 +434,7 @@
                     `;
                 });
 
+                // Tabel Transaksi
                 const txTable = document.getElementById('transaction-table');
                 txTable.innerHTML = '';
                 if (data.transactions && data.transactions.length > 0) {
@@ -430,6 +461,7 @@
                     txTable.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-zinc-600">Belum ada aktivitas transaksi.</td></tr>`;
                 }
 
+                // Tabel Tagihan
                 const billsTable = document.getElementById('bills-table');
                 billsTable.innerHTML = '';
                 if (data.bills && data.bills.length > 0) {
@@ -454,6 +486,7 @@
                     billsTable.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-zinc-600">Tidak ada tagihan aktif.</td></tr>`;
                 }
 
+                // Tabel Piutang
                 const piutangTable = document.getElementById('piutang-table');
                 piutangTable.innerHTML = '';
                 if (data.piutangs && data.piutangs.length > 0) {
@@ -479,6 +512,7 @@
             }
         }
 
+        // Submit Transaksi
         async function submitTransaction(e) {
             e.preventDefault();
             const payload = {
@@ -489,10 +523,23 @@
                 admin_fee: parseFloat(document.getElementById('tx-admin').value) || 0,
                 description: document.getElementById('tx-desc').value
             };
-            const res = await fetch('/api/transaction', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (res.ok) { document.getElementById('transaction-form').reset(); toggleTargetAccount(); loadDashboard(); } else { alert('Gagal menyimpan transaksi.'); }
+
+            const res = await fetch('/api/transaction', {
+                method: 'POST',
+                headers: authHeaders, // Kirim Token JWT
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                document.getElementById('transaction-form').reset();
+                toggleTargetAccount();
+                loadDashboard();
+            } else {
+                alert('Gagal menyimpan transaksi.');
+            }
         }
 
+        // Submit Tagihan
         async function submitBill(e) {
             e.preventDefault();
             const payload = {
@@ -501,20 +548,64 @@
                 total_amount: parseFloat(document.getElementById('bill-total').value),
                 tenor: parseInt(document.getElementById('bill-tenor').value)
             };
-            const res = await fetch('/api/bill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (res.ok) { document.getElementById('bill-form').reset(); loadDashboard(); } else { alert('Gagal menyimpan tagihan.'); }
+
+            const res = await fetch('/api/bill', {
+                method: 'POST',
+                headers: authHeaders, // Kirim Token JWT
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                document.getElementById('bill-form').reset();
+                loadDashboard();
+            } else {
+                alert('Gagal menyimpan tagihan.');
+            }
         }
 
+        // Submit Piutang
         async function submitPiutang(e) {
             e.preventDefault();
-            const payload = { name: document.getElementById('piutang-name').value, amount: parseFloat(document.getElementById('piutang-amount').value) };
-            const res = await fetch('/api/piutang', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (res.ok) { document.getElementById('piutang-form').reset(); loadDashboard(); } else { alert('Gagal menyimpan piutang.'); }
+            const payload = {
+                name: document.getElementById('piutang-name').value,
+                amount: parseFloat(document.getElementById('piutang-amount').value)
+            };
+
+            const res = await fetch('/api/piutang', {
+                method: 'POST',
+                headers: authHeaders, // Kirim Token JWT
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                document.getElementById('piutang-form').reset();
+                loadDashboard();
+            } else {
+                alert('Gagal menyimpan piutang.');
+            }
         }
 
-        async function deleteTransaction(id) { if (confirm('Hapus transaksi ini?')) { await fetch(`/api/transaction/delete?id=${id}`, { method: 'DELETE' }); loadDashboard(); } }
-        async function deleteBill(id) { if (confirm('Hapus tagihan ini?')) { await fetch(`/api/bill/delete?id=${id}`, { method: 'DELETE' }); loadDashboard(); } }
-        async function deletePiutang(id) { if (confirm('Hapus piutang ini?')) { await fetch(`/api/piutang/delete?id=${id}`, { method: 'DELETE' }); loadDashboard(); } }
+        // Fungsi Hapus (Transaksi, Tagihan, Piutang) membawa Token JWT
+        async function deleteTransaction(id) {
+            if (confirm('Yakin ingin menghapus transaksi ini?')) {
+                await fetch(`/api/transaction/delete?id=${id}`, { method: 'DELETE', headers: authHeaders });
+                loadDashboard();
+            }
+        }
+
+        async function deleteBill(id) {
+            if (confirm('Yakin ingin menghapus tagihan ini?')) {
+                await fetch(`/api/bill/delete?id=${id}`, { method: 'DELETE', headers: authHeaders });
+                loadDashboard();
+            }
+        }
+
+        async function deletePiutang(id) {
+            if (confirm('Yakin ingin menghapus piutang ini?')) {
+                await fetch(`/api/piutang/delete?id=${id}`, { method: 'DELETE', headers: authHeaders });
+                loadDashboard();
+            }
+        }
 
         loadDashboard();
     </script>

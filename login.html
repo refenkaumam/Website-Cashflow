@@ -103,7 +103,6 @@
             { text: "Menabung bukan soal seberapa besar penghasilanmu, tapi seberapa konsisten kedisiplinanmu.", author: "Money Management" }
         ];
 
-        // Pilih kutipan secara acak setiap kali halaman dimuat
         const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
         document.getElementById('quote-text').innerText = `"${randomQuote.text}"`;
         document.getElementById('quote-author').innerText = randomQuote.author;
@@ -141,14 +140,16 @@
 
                 if (response.ok) {
                     if (isLogin) {
-                        // Simpan username ke browser sebelum masuk ke dashboard
+                        const data = await response.json();
+                        // SIMPAN TOKEN JWT DAN USERNAME KE BROWSER
+                        localStorage.setItem('cashflow_token', data.token);
                         localStorage.setItem('cashflow_username', username);
                         window.location.href = '/dashboard';
                     } else {
                         succDiv.innerText = 'Registrasi berhasil! Silakan login untuk memulai.';
                         succDiv.classList.remove('hidden');
                         document.getElementById('auth-form').reset();
-                        toggleMode(); // Kembali ke mode login setelah sukses daftar
+                        toggleMode();
                     }
                 } else {
                     const errText = await response.text();
