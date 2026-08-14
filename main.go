@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"encoding/json"
@@ -20,6 +21,7 @@ import (
 var jwtKey = []byte("rahasia-super-aman-cashflow-2026")
 
 type Claims struct {
+	UserID   int    `json:"user_id"`
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
@@ -112,7 +114,6 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Railway!")
 
-	// Otomatis buat tabel users jika belum ada
 	_, err = db.Exec(`
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -123,28 +124,26 @@ func main() {
     `)
 	if err != nil {
 		log.Println("Gagal membuat tabel users:", err)
-	} else {
-		log.Println("Tabel users siap digunakan!")
 	}
 
 	// ROUTING HALAMAN
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "home.html") // Halaman utama (Landing Page)
+		http.ServeFile(w, r, "home.html")
 	})
 
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "login.html") // Halaman Login / Register
+		http.ServeFile(w, r, "login.html")
 	})
 
 	http.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html") // Dashboard utama
+		http.ServeFile(w, r, "index.html")
 	})
 
-	// Endpoint Publik (Auth)
+	// Endpoint Publik
 	http.HandleFunc("/api/register", handleRegister)
 	http.HandleFunc("/api/login", handleLogin)
 
-	// Endpoint Privat (Dilindungi Satpam Middleware JWT)
+	// Endpoint Privat (Dilindungi Middleware JWT)
 	http.HandleFunc("/api/transaction", authMiddleware(handleTransaction))
 	http.HandleFunc("/api/transaction/delete", authMiddleware(handleDeleteTransaction))
 	http.HandleFunc("/api/history", authMiddleware(handleHistory))
@@ -191,7 +190,9 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		next(w, r)
+		// MENYISIPKAN USER ID KE DALAM REQUEST CONTEXT
+		ctx := context.WithValue(r.Context(), "userID", claims.UserID)
+		next(w, r.WithContext(ctx))
 	}
 }
 
@@ -217,11 +218,15 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", u.Username, string(hashedPassword))
+	res, err := db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", u.Username, string(hashedPassword))
 	if err != nil {
 		http.Error(w, "Username sudah digunakan", http.StatusConflict)
 		return
 	}
+
+	// BUATKAN AKUN "DOMPET UTAMA" OTOMATIS UNTUK USER BARU
+	newUserID, _ := res.LastInsertId()
+	db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0.00, ?)", newUserID)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Registrasi berhasil"})
@@ -239,7 +244,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&u)
 
 	var storedPassword string
-	err := db.QueryRow("SELECT password FROM users WHERE username = ?", u.Username).Scan(&storedPassword)
+	var userID int
+	err := db.QueryRow("SELECT id, password FROM users WHERE username = ?", u.Username).Scan(&userID, &storedPassword)
 	if err != nil {
 		http.Error(w, "Username atau password salah", http.StatusUnauthorized)
 		return
@@ -251,9 +257,10 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Buat Token JWT berlaku selama 24 jam
+	// Masukkan USER ID ke dalam token
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
+		UserID:   userID,
 		Username: u.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
@@ -274,108 +281,120 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// --- Handler Cashflow ---
+// --- Handler Cashflow (Data Terisolasi Berdasarkan User ID) ---
 func handleTransaction(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID").(int)
 	var t Transaction
 	json.NewDecoder(r.Body).Decode(&t)
 	tx, _ := db.Begin()
-	tx.Exec(`INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description) VALUES (?, ?, ?, ?, ?)`, t.AccountID, t.Type, t.Amount, t.AdminFee, t.Desc)
+	
+	tx.Exec(`INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description, user_id) VALUES (?, ?, ?, ?, ?, ?)`, t.AccountID, t.Type, t.Amount, t.AdminFee, t.Desc, userID)
 	
 	if t.Type == "INCOME" {
-		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ?", t.Amount, t.AccountID)
+		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?", t.Amount, t.AccountID, userID)
 	} else if t.Type == "EXPENSE" {
-		tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ?", t.Amount+t.AdminFee, t.AccountID)
+		tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ? AND user_id = ?", t.Amount+t.AdminFee, t.AccountID, userID)
 	} else if t.Type == "TRANSFER" {
-		tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ?", t.Amount+t.AdminFee, t.AccountID)
-		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ?", t.Amount, *t.TargetAccountID)
+		tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ? AND user_id = ?", t.Amount+t.AdminFee, t.AccountID, userID)
+		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?", t.Amount, *t.TargetAccountID, userID)
 		incDesc := fmt.Sprintf("Transfer masuk (Ref: %s)", t.Desc)
-		tx.Exec(`INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description) VALUES (?, 'INCOME', ?, 0, ?)`, *t.TargetAccountID, t.Amount, incDesc)
+		tx.Exec(`INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description, user_id) VALUES (?, 'INCOME', ?, 0, ?, ?)`, *t.TargetAccountID, t.Amount, incDesc, userID)
 	}
 	tx.Commit()
 	w.WriteHeader(http.StatusCreated)
 }
 
 func handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID").(int)
 	idStr := r.URL.Query().Get("id")
 	tx, _ := db.Begin()
 	var accID int
 	var tType string
 	var amount, adminFee float64
 	
-	err := tx.QueryRow("SELECT account_id, transaction_type, amount, admin_fee FROM transactions WHERE id = ?", idStr).Scan(&accID, &tType, &amount, &adminFee)
+	err := tx.QueryRow("SELECT account_id, transaction_type, amount, admin_fee FROM transactions WHERE id = ? AND user_id = ?", idStr, userID).Scan(&accID, &tType, &amount, &adminFee)
 	if err == nil {
 		if tType == "INCOME" {
-			tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ?", amount, accID)
+			tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ? AND user_id = ?", amount, accID, userID)
 		} else {
-			tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ?", amount+adminFee, accID)
+			tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?", amount+adminFee, accID, userID)
 		}
-		tx.Exec("DELETE FROM transactions WHERE id = ?", idStr)
+		tx.Exec("DELETE FROM transactions WHERE id = ? AND user_id = ?", idStr, userID)
 	}
 	tx.Commit()
 	w.WriteHeader(http.StatusOK)
 }
 
 func handleBill(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID").(int)
 	var b Bill
 	json.NewDecoder(r.Body).Decode(&b)
 	if b.Tenor > 0 {
 		b.MonthlyAmount = b.TotalAmount / float64(b.Tenor)
 	}
-	db.Exec("INSERT INTO bills (platform, item_name, monthly_amount, tenor, total_amount) VALUES (?, ?, ?, ?, ?)", b.Platform, b.ItemName, b.MonthlyAmount, b.Tenor, b.TotalAmount)
+	db.Exec("INSERT INTO bills (platform, item_name, monthly_amount, tenor, total_amount, user_id) VALUES (?, ?, ?, ?, ?, ?)", b.Platform, b.ItemName, b.MonthlyAmount, b.Tenor, b.TotalAmount, userID)
 	w.WriteHeader(http.StatusCreated)
 }
 
 func handleDeleteBill(w http.ResponseWriter, r *http.Request) {
-	db.Exec("DELETE FROM bills WHERE id = ?", r.URL.Query().Get("id"))
+	userID := r.Context().Value("userID").(int)
+	db.Exec("DELETE FROM bills WHERE id = ? AND user_id = ?", r.URL.Query().Get("id"), userID)
 	w.WriteHeader(http.StatusOK)
 }
 
 func handlePayBill(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID").(int)
 	var req PayBillRequest
 	json.NewDecoder(r.Body).Decode(&req)
 	tx, _ := db.Begin()
 	var platform, itemName string
 	var currentTotal float64
 	var tenor int
-	err := tx.QueryRow("SELECT platform, item_name, total_amount, tenor FROM bills WHERE id = ?", req.BillID).Scan(&platform, &itemName, &currentTotal, &tenor)
+	
+	err := tx.QueryRow("SELECT platform, item_name, total_amount, tenor FROM bills WHERE id = ? AND user_id = ?", req.BillID, userID).Scan(&platform, &itemName, &currentTotal, &tenor)
 	if err != nil {
 		tx.Rollback()
 		http.Error(w, "Not found", 404)
 		return
 	}
+	
 	desc := fmt.Sprintf("Cicilan %s - %s", platform, itemName)
-	tx.Exec("INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description) VALUES (?, 'EXPENSE', ?, 0, ?)", req.AccountID, req.PaidAmount, desc)
-	tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ?", req.PaidAmount, req.AccountID)
+	tx.Exec("INSERT INTO transactions (account_id, transaction_type, amount, admin_fee, description, user_id) VALUES (?, 'EXPENSE', ?, 0, ?, ?)", req.AccountID, req.PaidAmount, desc, userID)
+	tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ? AND user_id = ?", req.PaidAmount, req.AccountID, userID)
+	
 	newTotal := currentTotal - req.PaidAmount
 	newTenor := tenor - 1
 	if newTenor <= 0 || newTotal <= 0 {
-		tx.Exec("DELETE FROM bills WHERE id = ?", req.BillID)
+		tx.Exec("DELETE FROM bills WHERE id = ? AND user_id = ?", req.BillID, userID)
 	} else {
 		newMonthly := newTotal / float64(newTenor)
-		tx.Exec("UPDATE bills SET tenor = ?, total_amount = ?, monthly_amount = ? WHERE id = ?", newTenor, newTotal, newMonthly, req.BillID)
+		tx.Exec("UPDATE bills SET tenor = ?, total_amount = ?, monthly_amount = ? WHERE id = ? AND user_id = ?", newTenor, newTotal, newMonthly, req.BillID, userID)
 	}
 	tx.Commit()
 	w.WriteHeader(http.StatusOK)
 }
 
 func handlePiutang(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID").(int)
 	var p Piutang
 	json.NewDecoder(r.Body).Decode(&p)
-	db.Exec("INSERT INTO piutang (name, amount) VALUES (?, ?)", p.Name, p.Amount)
+	db.Exec("INSERT INTO piutang (name, amount, user_id) VALUES (?, ?, ?)", p.Name, p.Amount, userID)
 	w.WriteHeader(http.StatusCreated)
 }
 
 func handleDeletePiutang(w http.ResponseWriter, r *http.Request) {
-	db.Exec("DELETE FROM piutang WHERE id = ?", r.URL.Query().Get("id"))
+	userID := r.Context().Value("userID").(int)
+	db.Exec("DELETE FROM piutang WHERE id = ? AND user_id = ?", r.URL.Query().Get("id"), userID)
 	w.WriteHeader(http.StatusOK)
 }
 
 func handleHistory(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID").(int)
 	w.Header().Set("Content-Type", "application/json")
 	var data DashboardData
 	var totalBal, totalBill, totalPiutang float64
 
-	rowsAcc, err := db.Query("SELECT id, bank_name, balance FROM accounts")
+	rowsAcc, err := db.Query("SELECT id, bank_name, balance FROM accounts WHERE user_id = ?", userID)
 	if err == nil {
 		for rowsAcc.Next() {
 			var acc Account
@@ -386,7 +405,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsAcc.Close()
 	}
 
-	rowsBill, err := db.Query("SELECT id, platform, item_name, monthly_amount, tenor, total_amount FROM bills")
+	rowsBill, err := db.Query("SELECT id, platform, item_name, monthly_amount, tenor, total_amount FROM bills WHERE user_id = ?", userID)
 	if err == nil {
 		for rowsBill.Next() {
 			var b Bill
@@ -397,7 +416,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsBill.Close()
 	}
 
-	rowsPiutang, err := db.Query("SELECT id, name, amount FROM piutang")
+	rowsPiutang, err := db.Query("SELECT id, name, amount FROM piutang WHERE user_id = ?", userID)
 	if err == nil {
 		for rowsPiutang.Next() {
 			var p Piutang
@@ -408,7 +427,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsPiutang.Close()
 	}
 
-	rowsTx, err := db.Query("SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i') FROM transactions t JOIN accounts a ON t.account_id = a.id ORDER BY t.created_at DESC LIMIT 50")
+	rowsTx, err := db.Query("SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i') FROM transactions t JOIN accounts a ON t.account_id = a.id WHERE t.user_id = ? ORDER BY t.created_at DESC LIMIT 50", userID)
 	if err == nil {
 		for rowsTx.Next() {
 			var tx TransactionRow
