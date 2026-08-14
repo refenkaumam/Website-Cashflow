@@ -21,7 +21,18 @@
         }
     </script>
 
+    <!-- ANIMASI & FIX AUTOFILL BROWSER -->
     <style>
+        /* Mencegah background input berubah jadi putih karena Autofill Chrome/Edge */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #18181b inset !important; /* Warna gelap zinc-900 */
+            -webkit-text-fill-color: #f4f4f5 !important; /* Warna teks putih */
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
         @keyframes blob {
             0% { transform: translate(0px, 0px) scale(1); }
             33% { transform: translate(30px, -50px) scale(1.1); }
@@ -61,7 +72,7 @@
             <span class="bg-zinc-800/80 backdrop-blur-md text-zinc-300 text-xs px-3 py-1 rounded-full border border-white/10 font-medium">Finance</span>
         </div>
 
-        <div class="w-full max-w-md bg-[#09090b]/60 p-10 rounded-[2rem] border border-white/10 backdrop-blur-xl shadow-2xl relative transition-all duration-500" id="form-container">
+        <div class="w-full max-w-md bg-[#09090b]/60 p-10 rounded-[2rem] border border-white/10 backdrop-blur-xl shadow-2xl relative transition-all duration-500">
             <h2 id="form-title" class="text-3xl font-bold mb-2 tracking-tight text-white">Selamat Datang!</h2>
             <p id="form-subtitle" class="text-zinc-400 text-sm mb-8">Silakan masuk untuk melanjutkan ke dashboard.</p>
             
@@ -69,30 +80,33 @@
             <div id="success-msg" class="hidden bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-2xl mb-6 text-sm font-medium backdrop-blur-sm"></div>
 
             <form id="auth-form" onsubmit="handleSubmit(event)" class="space-y-4">
+                
+                <!-- 1. USERNAME -->
                 <div>
                     <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Username</label>
-                    <input type="text" id="username" required placeholder="Masukkan username Anda" class="w-full bg-zinc-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600 backdrop-blur-md">
+                    <input type="text" id="username" required placeholder="Masukkan username Anda" autocomplete="off" class="w-full bg-[#18181b] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600">
                 </div>
                 
-                <!-- KOLOM EMAIL (Disembunyikan saat login) -->
-                <div id="email-group" class="hidden opacity-0 transition-opacity duration-500">
+                <!-- 2. EMAIL (Hanya muncul saat daftar) -->
+                <div id="email-group" class="hidden">
                     <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Alamat Email</label>
-                    <input type="email" id="email" placeholder="nama@email.com" class="w-full bg-zinc-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600 backdrop-blur-md">
+                    <input type="email" id="email" placeholder="nama@email.com" autocomplete="off" class="w-full bg-[#18181b] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600">
                 </div>
 
+                <!-- 3. KATA SANDI -->
                 <div>
                     <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Kata Sandi</label>
-                    <input type="password" id="password" required placeholder="Minimal 8 karakter" class="w-full bg-zinc-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600 backdrop-blur-md">
+                    <input type="password" id="password" required placeholder="Minimal 8 karakter" autocomplete="new-password" class="w-full bg-[#18181b] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600">
                 </div>
 
-                <!-- KOLOM KONFIRMASI KATA SANDI (Disembunyikan saat login) -->
-                <div id="confirm-password-group" class="hidden opacity-0 transition-opacity duration-500">
+                <!-- 4. KONFIRMASI KATA SANDI (Hanya muncul saat daftar) -->
+                <div id="confirm-password-group" class="hidden">
                     <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Konfirmasi Kata Sandi</label>
-                    <input type="password" id="confirm-password" placeholder="Ulangi kata sandi" class="w-full bg-zinc-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600 backdrop-blur-md">
+                    <input type="password" id="confirm-password" placeholder="Ulangi kata sandi" autocomplete="new-password" class="w-full bg-[#18181b] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600">
                 </div>
 
-                <!-- SYARAT & KETENTUAN (Disembunyikan saat login) -->
-                <div id="terms-group" class="hidden opacity-0 transition-opacity duration-500 flex items-center gap-3 pt-2">
+                <!-- 5. SYARAT & KETENTUAN (Hanya muncul saat daftar) -->
+                <div id="terms-group" class="hidden items-center gap-3 pt-2">
                     <input type="checkbox" id="terms" class="w-4 h-4 rounded border-white/10 bg-zinc-900/50 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-zinc-900">
                     <label for="terms" class="text-xs text-zinc-400">Saya menyetujui <a href="#" class="text-cyan-400 hover:underline">Syarat & Ketentuan</a></label>
                 </div>
@@ -146,6 +160,7 @@
 
         let isLogin = true;
 
+        // FUNGSI TOGGLE YANG LEBIH STABIL
         function toggleMode() {
             isLogin = !isLogin;
             const emailGroup = document.getElementById('email-group');
@@ -162,28 +177,22 @@
             document.getElementById('success-msg').classList.add('hidden');
 
             if (isLogin) {
-                // SEMBUNYIKAN form pendaftaran
-                emailGroup.classList.remove('opacity-100');
-                confirmPassGroup.classList.remove('opacity-100');
-                termsGroup.classList.remove('opacity-100');
-                setTimeout(() => {
-                    emailGroup.classList.add('hidden');
-                    confirmPassGroup.classList.add('hidden');
-                    termsGroup.classList.add('hidden');
-                }, 300); // jeda agar transisi halus
+                // Sembunyikan field register
+                emailGroup.classList.add('hidden');
+                confirmPassGroup.classList.add('hidden');
+                
+                termsGroup.classList.add('hidden');
+                termsGroup.classList.remove('flex'); // Hapus flex agar benar-benar hilang
 
                 document.getElementById('email').removeAttribute('required');
                 document.getElementById('confirm-password').removeAttribute('required');
             } else {
-                // TAMPILKAN form pendaftaran
+                // Tampilkan field register
                 emailGroup.classList.remove('hidden');
                 confirmPassGroup.classList.remove('hidden');
+                
                 termsGroup.classList.remove('hidden');
-                setTimeout(() => {
-                    emailGroup.classList.add('opacity-100');
-                    confirmPassGroup.classList.add('opacity-100');
-                    termsGroup.classList.add('opacity-100');
-                }, 10);
+                termsGroup.classList.add('flex'); // Kembalikan gaya flex-nya
 
                 document.getElementById('email').setAttribute('required', 'true');
                 document.getElementById('confirm-password').setAttribute('required', 'true');
