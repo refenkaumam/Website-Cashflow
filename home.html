@@ -1,97 +1,91 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CashFlow. | Kendalikan Masa Depan Keuanganmu</title>
+    <title>CashFlow. | Financial Clarity</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
 </head>
-<body class="bg-[#09090b] text-zinc-100 selection:bg-cyan-500/30">
+<body class="text-zinc-100">
 
     <!-- Navbar -->
     <nav class="max-w-7xl mx-auto px-8 py-8 flex justify-between items-center">
-        <h1 class="text-2xl font-bold tracking-tight text-white">CashFlow<span class="text-cyan-500">.</span></h1>
-        <div class="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
-            <a href="#services" class="hover:text-white transition">Fitur</a>
-            <a href="#about" class="hover:text-white transition">Tentang</a>
+        <h1 class="text-2xl font-bold tracking-tight text-white italic">CashFlow<span class="text-cyan-500 not-italic">.</span></h1>
+        <div class="flex items-center gap-6">
+            <a href="/login" class="text-sm font-medium text-zinc-400 hover:text-white transition">Masuk</a>
+            <a href="/login" class="bg-white text-black px-6 py-2.5 rounded-full text-sm font-bold hover:bg-zinc-200 transition">Mulai</a>
         </div>
-        <a href="/login" class="bg-white/5 border border-white/10 px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-white/10 transition">Masuk</a>
     </nav>
 
     <!-- Hero Section -->
-    <section class="max-w-7xl mx-auto px-8 pt-20 pb-32 text-center">
-        <span class="inline-block py-1 px-4 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-semibold uppercase tracking-widest mb-6">Mulai Perjalanan Finansialmu</span>
-        <h1 class="text-5xl md:text-7xl font-extrabold mb-8 leading-[1.1] tracking-tight">
-            Kendalikan Uangmu <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Dengan Presisi.</span>
+    <header class="max-w-7xl mx-auto px-8 pt-24 pb-32 text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-8">
+            <span>🚀</span> Sistem Finansial Generasi Baru
+        </div>
+        <h1 class="text-6xl md:text-8xl font-extrabold mb-10 leading-[1] tracking-tighter text-white">
+            Kelola Uang <br> <span class="text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-blue-600">Dengan Presisi.</span>
         </h1>
-        <p class="text-zinc-500 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-light">
-            Platform pelacakan arus kas cerdas untuk masa depan yang lebih aman. Pantau saldo, kelola tagihan, dan kendalikan piutang dalam satu dasbor.
+        <p class="text-zinc-400 text-xl mb-12 max-w-xl mx-auto font-light">
+            Platform modern untuk melacak arus kas, mengelola cicilan, dan menjaga piutang. Simpel, aman, dan tanpa kerumitan.
         </p>
         <div class="flex gap-4 justify-center">
-            <a href="/login" class="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold px-8 py-4 rounded-2xl transition shadow-lg shadow-cyan-500/20 text-lg">Mulai Sekarang</a>
+            <a href="/login" class="bg-cyan-500 hover:bg-cyan-600 text-black font-bold px-10 py-5 rounded-2xl transition-all shadow-[0_0_40px_-10px_rgba(6,182,212,0.5)]">Mulai Kelola Sekarang</a>
         </div>
-    </section>
+    </header>
 
-    <!-- Service / Features Section -->
-    <section id="services" class="max-w-7xl mx-auto px-8 py-24 border-t border-white/5">
-        <h2 class="text-3xl font-bold text-center mb-16">Dirancang untuk Efisiensi</h2>
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="bg-zinc-900/40 p-8 rounded-3xl border border-white/5 hover:border-cyan-500/30 transition-all">
-                <div class="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center text-cyan-400 mb-6">📊</div>
-                <h3 class="font-bold text-lg mb-3">Analitik Real-time</h3>
-                <p class="text-zinc-500 text-sm">Visualisasi data keuanganmu secara instan. Lihat pola pengeluaranmu dalam grafik yang mudah dipahami.</p>
+    <!-- Services -->
+    <section id="services" class="max-w-7xl mx-auto px-8 py-24">
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="glass-card p-10 rounded-[2rem] hover:border-cyan-500/30 transition-all duration-500">
+                <div class="text-cyan-400 mb-6 text-2xl">📊</div>
+                <h3 class="font-bold text-xl mb-3">Analitik Real-time</h3>
+                <p class="text-zinc-500 text-sm leading-relaxed">Visualisasi data keuangan yang dinamis untuk melihat ke mana perginya uang Anda.</p>
             </div>
-            <div class="bg-zinc-900/40 p-8 rounded-3xl border border-white/5 hover:border-cyan-500/30 transition-all">
-                <div class="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-400 mb-6">💳</div>
-                <h3 class="font-bold text-lg mb-3">Manajemen Utang</h3>
-                <p class="text-zinc-500 text-sm">Jangan biarkan tagihan terlewat. Kelola cicilan dan hutang dengan pengingat yang teratur.</p>
+            <div class="glass-card p-10 rounded-[2rem] hover:border-rose-500/30 transition-all duration-500">
+                <div class="text-rose-400 mb-6 text-2xl">💳</div>
+                <h3 class="font-bold text-xl mb-3">Manajemen Utang</h3>
+                <p class="text-zinc-500 text-sm leading-relaxed">Kelola tagihan dan cicilan dengan pengingat cerdas agar tidak ada lagi denda keterlambatan.</p>
             </div>
-            <div class="bg-zinc-900/40 p-8 rounded-3xl border border-white/5 hover:border-cyan-500/30 transition-all">
-                <div class="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-400 mb-6">🤝</div>
-                <h3 class="font-bold text-lg mb-3">Pelacak Piutang</h3>
-                <p class="text-zinc-500 text-sm">Pastikan setiap uang yang dipinjam rekanmu kembali tepat waktu dengan catatan yang bersih.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Social Proof Section -->
-    <section class="max-w-7xl mx-auto px-8 py-24 text-center">
-        <h2 class="text-3xl font-bold mb-16">Dipercaya oleh Komunitas</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div class="bg-white/5 p-6 rounded-2xl">
-                <h4 class="text-3xl font-bold text-cyan-400">100+</h4>
-                <p class="text-zinc-500 text-sm">Pengguna Aktif</p>
-            </div>
-            <div class="bg-white/5 p-6 rounded-2xl">
-                <h4 class="text-3xl font-bold text-cyan-400">5k+</h4>
-                <p class="text-zinc-500 text-sm">Transaksi Tercatat</p>
-            </div>
-            <div class="bg-white/5 p-6 rounded-2xl">
-                <h4 class="text-3xl font-bold text-cyan-400">99%</h4>
-                <p class="text-zinc-500 text-sm">Uptime Server</p>
-            </div>
-            <div class="bg-white/5 p-6 rounded-2xl">
-                <h4 class="text-3xl font-bold text-cyan-400">24/7</h4>
-                <p class="text-zinc-500 text-sm">Akses Data</p>
+            <div class="glass-card p-10 rounded-[2rem] hover:border-amber-500/30 transition-all duration-500">
+                <div class="text-amber-400 mb-6 text-2xl">🤝</div>
+                <h3 class="font-bold text-xl mb-3">Pelacak Piutang</h3>
+                <p class="text-zinc-500 text-sm leading-relaxed">Rekap piutang rekan dengan detail yang rapi. Jangan sampai lupa siapa yang meminjam.</p>
             </div>
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="max-w-5xl mx-auto px-8 py-24 text-center">
-        <div class="bg-gradient-to-br from-cyan-900/20 to-zinc-900 p-12 rounded-[3rem] border border-white/10">
-            <h2 class="text-4xl font-bold mb-6">Siap merapikan keuanganmu?</h2>
-            <p class="text-zinc-400 mb-10 max-w-lg mx-auto">Bergabunglah dengan ratusan orang yang telah mengontrol masa depan finansial mereka bersama CashFlow.</p>
-            <a href="/login" class="bg-white text-black font-bold px-8 py-4 rounded-2xl hover:bg-zinc-200 transition">Buat Akun Gratis</a>
+    <!-- Social Proof -->
+    <section class="max-w-7xl mx-auto px-8 py-24">
+        <div class="glass-card p-16 rounded-[3rem] text-center">
+            <h2 class="text-3xl font-bold mb-12">Mengapa Memilih CashFlow?</h2>
+            <div class="grid md:grid-cols-3 gap-12">
+                <div>
+                    <div class="text-4xl font-bold text-white mb-2">100%</div>
+                    <div class="text-zinc-500 text-sm uppercase tracking-widest">Keamanan Terjamin</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-white mb-2">24/7</div>
+                    <div class="text-zinc-500 text-sm uppercase tracking-widest">Akses Tanpa Henti</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-white mb-2">Instan</div>
+                    <div class="text-zinc-500 text-sm uppercase tracking-widest">Sync Data Cepat</div>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="max-w-7xl mx-auto px-8 py-12 border-t border-white/5 text-center text-zinc-600 text-sm">
-        <p>&copy; 2026 CashFlow System. Dibuat dengan presisi.</p>
+    <!-- CTA -->
+    <footer class="max-w-7xl mx-auto px-8 py-24 text-center">
+        <h2 class="text-5xl font-bold mb-8">Siap merapikan keuanganmu?</h2>
+        <a href="/login" class="inline-block border border-white/10 hover:border-white/30 text-white font-bold px-10 py-5 rounded-full transition-all">Buka Dasbor Sekarang</a>
+        <p class="mt-16 text-zinc-700 text-xs">&copy; 2026 CashFlow System.</p>
     </footer>
 
 </body>
-</html>git add .
+</html>
