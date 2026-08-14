@@ -90,8 +90,10 @@ type PayBillRequest struct {
 	PaidAmount float64 `json:"paid_amount"`
 }
 
+// STRUKTUR USER DIPERBARUI: Menambahkan Email
 type User struct {
 	Username string `json:"username"`
+	Email    string `json:"email"` // <-- Kolom baru
 	Password string `json:"password"`
 }
 
@@ -120,10 +122,12 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Railway!")
 
+	// TABEL USERS (Jika belum ada, buat dengan kolom email)
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			username VARCHAR(50) NOT NULL UNIQUE,
+			email VARCHAR(100) NOT NULL UNIQUE,
 			password VARCHAR(255) NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
@@ -150,7 +154,7 @@ func main() {
 	http.HandleFunc("/api/login", handleLogin)
 
 	// Endpoint Privat (Dilindungi Middleware JWT)
-	http.HandleFunc("/api/account", authMiddleware(handleAddAccount)) // <-- RUTE BARU TAMBAH DOMPET
+	http.HandleFunc("/api/account", authMiddleware(handleAddAccount))
 	http.HandleFunc("/api/transaction", authMiddleware(handleTransaction))
 	http.HandleFunc("/api/transaction/delete", authMiddleware(handleDeleteTransaction))
 	http.HandleFunc("/api/history", authMiddleware(handleHistory))
@@ -203,7 +207,7 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Handler Register
+// --- FUNGSI REGISTER YANG DIPERBARUI ---
 func handleRegister(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -214,20 +218,30 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	var u User
 	json.NewDecoder(r.Body).Decode(&u)
 
-	if u.Username == "" || u.Password == "" {
-		http.Error(w, "Username dan password tidak boleh kosong", http.StatusBadRequest)
+	// 1. Validasi Kolom Tidak Boleh Kosong (Sekarang wajib ada Email)
+	if u.Username == "" || u.Email == "" || u.Password == "" {
+		http.Error(w, "Username, Email, dan password tidak boleh kosong", http.StatusBadRequest)
 		return
 	}
 
+	// 2. Validasi Kekuatan Password (Minimal 8 Karakter)
+	if len(u.Password) < 8 {
+		http.Error(w, "Keamanan Lemah: Kata sandi minimal harus 8 karakter!", http.StatusBadRequest)
+		return
+	}
+
+	// 3. Enkripsi Password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Gagal mengenkripsi password", http.StatusInternalServerError)
 		return
 	}
 
-	res, err := db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", u.Username, string(hashedPassword))
+	// 4. Masukkan ke Database (Memasukkan Username, Email, dan Password)
+	res, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", u.Username, u.Email, string(hashedPassword))
 	if err != nil {
-		http.Error(w, "Username sudah digunakan", http.StatusConflict)
+		// Menangkap error jika Username atau Email sudah terpakai
+		http.Error(w, "Pendaftaran Gagal: Username atau Email sudah digunakan", http.StatusConflict)
 		return
 	}
 
