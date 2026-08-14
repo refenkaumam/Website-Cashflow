@@ -291,6 +291,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	// 5. Masukkan ke Database
 	res, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", u.Username, u.Email, string(hashedPassword))
 	if err != nil {
+		log.Println("DEBUG INSERT ERROR:", err) // <-- sementara, buat lihat error asli di terminal
 		http.Error(w, "Pendaftaran Gagal: Username atau Email sudah digunakan", http.StatusConflict)
 		return
 	}
