@@ -57,10 +57,25 @@
 </head>
 <body class="bg-[#050505] text-zinc-100 min-h-screen font-sans antialiased selection:bg-cyan-500/30 overflow-hidden flex relative">
     
-    <div id="page-loader" class="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center transition-opacity duration-500 opacity-100">
-        <div class="text-center">
-            <h1 class="text-3xl font-bold tracking-tight text-white animate-pulse">CashFlow<span class="text-cyan-500">.</span></h1>
-            <p id="loader-text" class="text-zinc-500 text-xs mt-3 tracking-widest uppercase hidden opacity-0 transition-opacity duration-700">Menyiapkan Dasbor Keamanan...</p>
+    <!-- ANIMASI OPENING ELEGANT (6 DETIK) -->
+    <div id="opening-loader" class="fixed inset-0 z-[99999] bg-[#050505] flex flex-col items-center justify-center transition-all duration-1000 opacity-100">
+        <!-- Efek Cahaya Latar Belakang -->
+        <div class="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+            <div class="w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] animate-pulse"></div>
+        </div>
+        <div class="relative z-10 flex flex-col items-center">
+            <!-- Teks Logo -->
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] animate-pulse">
+                CashFlow<span class="text-cyan-500">.</span>
+            </h1>
+            <!-- Garis Progress (Loading Bar) -->
+            <div class="mt-8 w-64 h-[2px] bg-zinc-800 rounded-full overflow-hidden relative">
+                <div id="loader-progress" class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-cyan-500 to-blue-500 transition-all ease-out" style="transition-duration: 5500ms;"></div>
+            </div>
+            <!-- Teks Status yang Berubah-ubah -->
+            <p id="loader-status" class="mt-5 text-zinc-500 text-xs tracking-[0.25em] uppercase transition-opacity duration-500 opacity-100">
+                Memulai Sistem...
+            </p>
         </div>
     </div>
 
@@ -142,13 +157,9 @@
             
             <div class="overflow-y-auto pr-4 space-y-4 text-sm text-zinc-400 leading-relaxed custom-scrollbar">
                 <p><strong class="text-white">1. Penerimaan Syarat</strong><br>Dengan mendaftar dan menggunakan layanan CashFlow, Anda menyatakan telah membaca, memahami, dan setuju untuk terikat oleh seluruh Syarat & Ketentuan ini.</p>
-                
                 <p><strong class="text-white">2. Privasi Data</strong><br>Kami berkomitmen untuk melindungi privasi Anda. Data finansial yang Anda masukkan (saldo, transaksi, piutang) dienkripsi dan hanya dapat diakses oleh Anda melalui kredensial login yang sah.</p>
-                
                 <p><strong class="text-white">3. Tanggung Jawab Pengguna</strong><br>Anda bertanggung jawab penuh atas kerahasiaan kata sandi Anda. CashFlow tidak bertanggung jawab atas kerugian yang timbul akibat kelalaian pengguna dalam menjaga akses akun.</p>
-                
                 <p><strong class="text-white">4. Ketersediaan Layanan</strong><br>Layanan ini disediakan "sebagaimana adanya". Kami berupaya menjaga *uptime* 24/7, namun tidak menjamin layanan akan selalu bebas dari gangguan teknis atau pemeliharaan server.</p>
-                
                 <p><strong class="text-white">5. Pembatasan Tanggung Jawab</strong><br>CashFlow merupakan alat pencatatan finansial. Kami tidak memberikan saran investasi, hukum, atau pajak. Segala keputusan finansial yang Anda ambil sepenuhnya berada di tangan Anda.</p>
             </div>
 
@@ -211,7 +222,6 @@
             document.getElementById('success-msg').classList.add('hidden');
 
             if (isLogin) {
-                // SEMBUNYIKAN form pendaftaran
                 emailGroup.classList.remove('opacity-100');
                 confirmPassGroup.classList.remove('opacity-100');
                 termsGroup.classList.remove('opacity-100');
@@ -221,12 +231,11 @@
                     confirmPassGroup.classList.add('hidden');
                     termsGroup.classList.add('hidden');
                     termsGroup.classList.remove('flex');
-                }, 300); // jeda agar transisi halus
+                }, 300); 
 
                 document.getElementById('email').removeAttribute('required');
                 document.getElementById('confirm-password').removeAttribute('required');
             } else {
-                // TAMPILKAN form pendaftaran
                 emailGroup.classList.remove('hidden');
                 confirmPassGroup.classList.remove('hidden');
                 termsGroup.classList.remove('hidden');
@@ -243,13 +252,11 @@
             }
         }
 
-        // FUNGSI MODAL SYARAT & KETENTUAN
         function openTermsModal(e) {
             e.preventDefault(); 
             const modal = document.getElementById('terms-modal');
             const content = document.getElementById('terms-modal-content');
             modal.classList.remove('hidden');
-            
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
                 content.classList.remove('scale-95');
@@ -261,7 +268,6 @@
             const content = document.getElementById('terms-modal-content');
             modal.classList.add('opacity-0');
             content.classList.add('scale-95');
-            
             setTimeout(() => {
                 modal.classList.add('hidden');
             }, 300);
@@ -279,7 +285,6 @@
             errDiv.classList.add('hidden');
             succDiv.classList.add('hidden');
 
-            // --- VALIDASI PENDAFTARAN FRONTEND ---
             let bodyData = {};
             if (!isLogin) {
                 const email = document.getElementById('email').value;
@@ -307,8 +312,6 @@
             }
 
             const endpoint = isLogin ? '/api/login' : '/api/register';
-
-            // Ubah tombol jadi status loading sementara
             btn.disabled = true;
             btnText.innerText = 'Memproses...';
 
@@ -325,25 +328,44 @@
                         localStorage.setItem('cashflow_token', data.token);
                         localStorage.setItem('cashflow_username', username);
                         
-                        const loader = document.getElementById("page-loader");
-                        const loaderText = document.getElementById("loader-text");
+                        const loader = document.getElementById("opening-loader");
+                        const loaderText = document.getElementById("loader-status");
+                        const progress = document.getElementById("loader-progress");
                         
+                        // Menampilkan animasi loading setelah sukses login
                         loader.style.display = "flex";
+                        progress.style.transitionDuration = "3000ms"; // Progress lebih cepat saat login
+                        
                         setTimeout(() => {
-                            loader.classList.remove("opacity-0");
+                            loader.classList.remove("opacity-0", "scale-105");
                             loader.classList.add("opacity-100");
+                            progress.style.width = "100%";
                         }, 10);
+                        
+                        loaderText.innerText = "MENGOTENTIKASI...";
+                        loaderText.style.opacity = 1;
+                        
                         setTimeout(() => {
-                            loaderText.classList.remove("hidden");
-                            setTimeout(() => loaderText.classList.remove("opacity-0"), 50);
-                        }, 800);
+                            loaderText.style.opacity = 0;
+                            setTimeout(() => {
+                                loaderText.innerText = "MENGALIHKAN KE DASHBOARD...";
+                                loaderText.style.opacity = 1;
+                            }, 500);
+                        }, 2000);
 
                         setTimeout(() => {
                             window.location.href = '/dashboard';
-                        }, 5000);
+                        }, 4000); // 4 detik langsung terlempar ke dashboard
 
                     } else {
-                        succDiv.innerText = 'Registrasi sukses! Silakan login dengan akun baru Anda.';
+                        succDiv.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Registrasi sukses! Silakan login dengan akun baru Anda.</span>
+                            </div>
+                        `;
                         succDiv.classList.remove('hidden');
                         document.getElementById('auth-form').reset();
                         btn.disabled = false;
@@ -366,25 +388,55 @@
         }
     </script>
 
+    <!-- SCRIPT ANIMASI OPENING 6 DETIK -->
     <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const loader = document.getElementById("page-loader");
+        const loader = document.getElementById("opening-loader");
+        const progress = document.getElementById("loader-progress");
+        const statusText = document.getElementById("loader-status");
+
+        // 1. Jalankan garis progress bar menjadi 100% (berjalan perlahan)
+        setTimeout(() => { progress.style.width = "100%"; }, 100);
+
+        // 2. Skenario ganti-ganti teks status biar terlihat canggih
+        setTimeout(() => { statusText.style.opacity = 0; }, 1500);
+        setTimeout(() => { 
+            statusText.innerText = "MENGAMANKAN KONEKSI..."; 
+            statusText.style.opacity = 1; 
+        }, 2000);
+
+        setTimeout(() => { statusText.style.opacity = 0; }, 3500);
+        setTimeout(() => { 
+            statusText.innerText = "MEMUAT ANTARMUKA..."; 
+            statusText.style.opacity = 1; 
+        }, 4000);
+
+        // 3. Selesaikan dan hilangkan animasi setelah tepat 6 detik (6000 ms)
         setTimeout(() => {
             loader.classList.remove("opacity-100");
-            loader.classList.add("opacity-0");
-            setTimeout(() => { loader.style.display = "none"; }, 500);
-        }, 300);
+            loader.classList.add("opacity-0", "scale-105"); // Efek zoom-out halus
+            
+            // Hapus elemen dari layar sepenuhnya
+            setTimeout(() => { loader.style.display = "none"; }, 1000);
+        }, 6000);
 
+        // 4. Logika loader mini saat klik teks/link di halaman (misal: "Ke Halaman Utama")
         document.querySelectorAll("a:not([href='#'])").forEach(link => {
             link.addEventListener("click", function(e) {
                 const href = this.getAttribute("href");
                 if (href && !href.startsWith("#") && this.target !== "_blank") {
                     e.preventDefault(); 
+                    
                     loader.style.display = "flex";
+                    progress.style.transitionDuration = "0ms"; // Hilangkan delay
+                    setTimeout(() => progress.style.width = "100%", 50);
+                    statusText.innerText = "MEMPROSES...";
+                    
                     setTimeout(() => {
-                        loader.classList.remove("opacity-0");
+                        loader.classList.remove("opacity-0", "scale-105");
                         loader.classList.add("opacity-100");
                     }, 10);
+                    
                     setTimeout(() => { window.location.href = href; }, 500);
                 }
             });
