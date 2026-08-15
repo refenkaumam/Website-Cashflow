@@ -16,10 +16,14 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	googleAuth "google.golang.org/api/idtoken"
 )
 
 // Kunci rahasia JWT (Pastikan aman di lingkungan produksi)
 var jwtKey = []byte("rahasia-super-aman-cashflow-2026")
+
+// Client ID Google OAuth yang baru saja kamu buat
+const googleClientID = "543295517478-qacl8h87h1j94n9etvflssu5pvi57tsj.apps.googleusercontent.com"
 
 type Claims struct {
 	UserID   int    `json:"user_id"`
@@ -34,12 +38,12 @@ type AccountRequest struct {
 }
 
 type Transaction struct {
-	AccountID       int     `json:"account_id"`
-	TargetAccountID *int    `json:"target_account_id"`
-	Type            string  `json:"transaction_type"`
-	Amount          float64 `json:"amount"`
-	AdminFee        float64 `json:"admin_fee"`
-	Desc            string  `json:"description"`
+	AccountID     int     `json:"account_id"`
+	TargetAccountID *int  `json:"target_account_id"`
+	Type          string  `json:"transaction_type"`
+	Amount        float64 `json:"amount"`
+	AdminFee      float64 `json:"admin_fee"`
+	Desc          string  `json:"description"`
 }
 
 type Account struct {
@@ -97,27 +101,27 @@ type User struct {
 	Password string `json:"password"`
 }
 
+type GoogleLoginRequest struct {
+	Token string `json:"token"`
+}
+
 var db *sql.DB
 
-// toDSN mengubah format connection string URL Railway jadi DSN Go yang aman (Aman dari password berkarakter khusus)
+// toDSN mengubah format connection string URL Railway jadi DSN Go yang aman
 func toDSN(raw string) string {
 	if !strings.HasPrefix(raw, "mysql://") {
-		return raw // sudah format DSN, tidak perlu diubah
+		return raw
 	}
 
-	// Hilangkan awalan "mysql://"
 	trimmed := strings.TrimPrefix(raw, "mysql://")
-
-	// Cari '@' paling belakang untuk memisahkan kredensial (user:pass) dari host
 	lastAtIndex := strings.LastIndex(trimmed, "@")
 	if lastAtIndex == -1 {
 		return raw
 	}
 
 	credentials := trimmed[:lastAtIndex]
-	rest := trimmed[lastAtIndex+1:] // Berisi host:port/dbname
+	rest := trimmed[lastAtIndex+1:]
 
-	// Cari tanda '/' pertama untuk memisahkan host dan nama database
 	slashIndex := strings.Index(rest, "/")
 	var host, dbName string
 	if slashIndex == -1 {
@@ -126,7 +130,6 @@ func toDSN(raw string) string {
 	} else {
 		host = rest[:slashIndex]
 		dbName = rest[slashIndex+1:]
-		// Bersihkan jika ada parameter tambahan di belakang (seperti ?sslmode=...)
 		if qIndex := strings.Index(dbName, "?"); qIndex != -1 {
 			dbName = dbName[:qIndex]
 		}
@@ -136,7 +139,6 @@ func toDSN(raw string) string {
 		dbName = "railway"
 	}
 
-	// Format DSN akhir yang diterima oleh driver MySQL Go
 	return fmt.Sprintf("%s@tcp(%s)/%s?parseTime=true", credentials, host, dbName)
 }
 
@@ -191,9 +193,10 @@ func main() {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	// Endpoint Publik (DILINDUNGI RATE LIMITER ANTI-BOT)
+	// Endpoint Publik
 	http.HandleFunc("/api/register", rateLimitMiddleware(handleRegister))
 	http.HandleFunc("/api/login", rateLimitMiddleware(handleLogin))
+	http.HandleFunc("/api/google-login", rateLimitMiddleware(handleGoogleLogin)) // ENDPOINT GOOGLE SIGN-IN
 
 	// Endpoint Privat (Dilindungi Middleware JWT)
 	http.HandleFunc("/api/account", authMiddleware(handleAddAccount))
@@ -216,7 +219,7 @@ func main() {
 }
 
 // =========================================================================
-// FITUR KEAMANAN: RATE LIMITER (ANTI SPAM / BRUTE FORCE)
+// FITUR KEAMANAN: RATE LIMITER
 // =========================================================================
 var (
 	ipRates = make(map[string]*rateData)
@@ -247,11 +250,11 @@ func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if v.count >= 10 {
+		if v.count >= 20 { // Dinaikkan sedikit batasnya agar aman untuk proses redirect Google
 			rateMu.Unlock()
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusTooManyRequests)
-			w.Write([]byte("Terlalu banyak percobaan. Harap tunggu 1 menit lagi karena alasan keamanan."))
+			w.Write([]byte("Terlalu banyak percobaan. Harap tunggu 1 menit lagi."))
 			return
 		}
 
@@ -340,7 +343,105 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Registrasi berhasil"})
 }
 
-// Handler Login (Menerbitkan Token JWT)
+// --- FUNGSI LOGIN GOOGLE ---
+func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	var req GoogleLoginRequest
+	json.NewDecoder(r.Body).Decode(&req)
+
+	if req.Token == "" {
+		http.Error(w, "Token Google tidak boleh kosong", http.StatusBadRequest)
+		return
+	}
+
+	// Memverifikasi keaslian token langsung ke server Google
+	payload, err := googleAuth.Validate(context.Background(), req.Token, googleClientID)
+	if err != nil {
+		log.Println("Google Token Validation Error:", err)
+		http.Error(w, "Autentikasi Google gagal atau tidak valid", http.StatusUnauthorized)
+		return
+	}
+
+	email := payload.Claims["email"].(string)
+	name, ok := payload.Claims["name"].(string)
+	if !ok || name == "" {
+		// Jika nama tidak ada dari Google, gunakan bagian depan email sebagai username
+		name = strings.Split(email, "@")[0]
+	}
+
+	// Bersihkan spasi atau karakter unik jika ada pada username dari Google
+	name = strings.ReplaceAll(name, " ", "")
+	if len(name) > 40 {
+		name = name[:40]
+	}
+
+	var userID int
+	var dbUsername string
+
+	// Cek apakah user dengan email tersebut sudah pernah terdaftar sebelumnya
+	err = db.QueryRow("SELECT id, username FROM users WHERE email = ?", email).Scan(&userID, &dbUsername)
+	if err == sql.ErrNoRows {
+		// Jika belum pernah daftar, otomatis daftarkan akun baru ke database!
+		// Password diisi acak/dummy karena user login menggunakan akun Google
+		dummyPassword, _ := bcrypt.GenerateFromPassword([]byte("GoogleSecureLogin2026!"), bcrypt.DefaultCost)
+		
+		// Pastikan username unik (jika kembar, tambahkan angka acak waktu)
+		uniqueUsername := name
+		var checkID int
+		errCheck := db.QueryRow("SELECT id FROM users WHERE username = ?", uniqueUsername).Scan(&checkID)
+		if errCheck == nil {
+			uniqueUsername = fmt.Sprintf("%s_%d", name, time.Now().Unix()%1000)
+		}
+
+		res, errInsert := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", uniqueUsername, email, string(dummyPassword))
+		if errInsert != nil {
+			log.Println("DEBUG GOOGLE REGISTER ERROR:", errInsert)
+			http.Error(w, "Gagal membuat akun via Google", http.StatusInternalServerError)
+			return
+		}
+
+		newID, _ := res.LastInsertId()
+		userID = int(newID)
+		dbUsername = uniqueUsername
+
+		// Buatkan dompet default otomatis
+		db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0.00, ?)", userID)
+	} else if err != nil {
+		http.Error(w, "Kesalahan pada database", http.StatusInternalServerError)
+		return
+	}
+
+	// Terbitkan Token JWT Sesi Pengguna
+	expirationTime := time.Now().Add(24 * time.Hour)
+	claims := &Claims{
+		UserID:   userID,
+		Username: dbUsername,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		http.Error(w, "Gagal membuat token sesi", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message":  "Login Google berhasil",
+		"token":    tokenString,
+		"username": dbUsername,
+	})
+}
+
+// Handler Login Biasa
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")

@@ -11,6 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- LIBRARY RESMI GOOGLE IDENTITY -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -126,7 +129,7 @@
                     <input type="password" id="confirm-password" placeholder="Ulangi kata sandi" autocomplete="new-password" class="w-full bg-zinc-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-zinc-600 backdrop-blur-md">
                 </div>
 
-                <!-- SYARAT & KETENTUAN (BISA DIKLIK) -->
+                <!-- SYARAT & KETENTUAN -->
                 <div id="terms-group" class="hidden opacity-0 transition-opacity duration-500 items-center gap-3 pt-2">
                     <input type="checkbox" id="terms" class="w-4 h-4 rounded border-white/10 bg-zinc-900/50 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-zinc-900">
                     <label for="terms" class="text-xs text-zinc-400">Saya menyetujui <a href="#" onclick="openTermsModal(event)" class="text-cyan-400 hover:underline">Syarat & Ketentuan</a></label>
@@ -136,6 +139,36 @@
                     <span id="btn-text">Masuk ke Akun</span>
                 </button>
             </form>
+
+            <!-- PEMBATAS (OR) -->
+            <div class="flex items-center my-6">
+                <div class="flex-grow border-t border-zinc-700"></div>
+                <span class="flex-shrink-0 mx-4 text-zinc-500 text-xs uppercase tracking-wider">atau</span>
+                <div class="flex-grow border-t border-zinc-700"></div>
+            </div>
+
+            <!-- CONTAINER TOMBOL GOOGLE -->
+            <div class="flex justify-center w-full relative">
+                <!-- Elemen tersembunyi untuk inisialisasi Client ID -->
+                <div id="g_id_onload"
+                     data-client_id="543295517478-qacl8h87h1j94n9etvflssu5pvi57tsj.apps.googleusercontent.com"
+                     data-context="use"
+                     data-ux_mode="popup"
+                     data-callback="handleGoogleLogin"
+                     data-auto_prompt="false">
+                </div>
+
+                <!-- Elemen visual untuk merender Tombol Google (Styling otomatis dari Google) -->
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="pill"
+                     data-theme="outline"
+                     data-text="continue_with"
+                     data-size="large"
+                     data-logo_alignment="left"
+                     data-width="320">
+                </div>
+            </div>
 
             <div class="mt-8 text-center text-sm border-t border-white/5 pt-6">
                 <span id="toggle-text" class="text-zinc-500">Baru pertama kali?</span>
@@ -147,14 +180,12 @@
     <!-- MODAL SYARAT & KETENTUAN (Tersembunyi by default) -->
     <div id="terms-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-[#09090b] border border-white/10 p-8 rounded-3xl w-full max-w-lg transform scale-95 transition-transform duration-300 shadow-2xl flex flex-col max-h-[80vh]" id="terms-modal-content">
-            
             <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                 <h3 class="text-xl font-bold text-white">Syarat & Ketentuan</h3>
                 <button onclick="closeTermsModal()" class="text-zinc-500 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            
             <div class="overflow-y-auto pr-4 space-y-4 text-sm text-zinc-400 leading-relaxed custom-scrollbar">
                 <p><strong class="text-white">1. Penerimaan Syarat</strong><br>Dengan mendaftar dan menggunakan layanan CashFlow, Anda menyatakan telah membaca, memahami, dan setuju untuk terikat oleh seluruh Syarat & Ketentuan ini.</p>
                 <p><strong class="text-white">2. Privasi Data</strong><br>Kami berkomitmen untuk melindungi privasi Anda. Data finansial yang Anda masukkan (saldo, transaksi, piutang) dienkripsi dan hanya dapat diakses oleh Anda melalui kredensial login yang sah.</p>
@@ -162,7 +193,6 @@
                 <p><strong class="text-white">4. Ketersediaan Layanan</strong><br>Layanan ini disediakan "sebagaimana adanya". Kami berupaya menjaga *uptime* 24/7, namun tidak menjamin layanan akan selalu bebas dari gangguan teknis atau pemeliharaan server.</p>
                 <p><strong class="text-white">5. Pembatasan Tanggung Jawab</strong><br>CashFlow merupakan alat pencatatan finansial. Kami tidak memberikan saran investasi, hukum, atau pajak. Segala keputusan finansial yang Anda ambil sepenuhnya berada di tangan Anda.</p>
             </div>
-
             <div class="mt-8 pt-4 border-t border-white/5">
                 <button onclick="closeTermsModal()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl text-sm transition-colors">Mengerti & Tutup</button>
             </div>
@@ -332,9 +362,8 @@
                         const loaderText = document.getElementById("loader-status");
                         const progress = document.getElementById("loader-progress");
                         
-                        // Menampilkan animasi loading setelah sukses login
                         loader.style.display = "flex";
-                        progress.style.transitionDuration = "3000ms"; // Progress lebih cepat saat login
+                        progress.style.transitionDuration = "3000ms"; 
                         
                         setTimeout(() => {
                             loader.classList.remove("opacity-0", "scale-105");
@@ -355,7 +384,7 @@
 
                         setTimeout(() => {
                             window.location.href = '/dashboard';
-                        }, 4000); // 4 detik langsung terlempar ke dashboard
+                        }, 4000); 
 
                     } else {
                         succDiv.innerHTML = `
@@ -386,6 +415,68 @@
                 btnText.innerText = isLogin ? 'Masuk ke Akun' : 'Daftar Sekarang';
             }
         }
+
+        // ==========================================
+        // FUNGSI UNTUK MENANGANI LOGIN VIA GOOGLE
+        // ==========================================
+        async function handleGoogleLogin(response) {
+            const errDiv = document.getElementById('error-msg');
+            errDiv.classList.add('hidden');
+            
+            try {
+                // response.credential berisi token rahasia dari Google
+                const res = await fetch('/api/google-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: response.credential })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    // Simpan token buatan kita dan nama user ke LocalStorage
+                    localStorage.setItem('cashflow_token', data.token);
+                    localStorage.setItem('cashflow_username', data.username);
+                    
+                    // Animasi perpindahan elegan
+                    const loader = document.getElementById("opening-loader");
+                    const loaderText = document.getElementById("loader-status");
+                    const progress = document.getElementById("loader-progress");
+                    
+                    loader.style.display = "flex";
+                    progress.style.transitionDuration = "3000ms"; 
+                    
+                    setTimeout(() => {
+                        loader.classList.remove("opacity-0", "scale-105");
+                        loader.classList.add("opacity-100");
+                        progress.style.width = "100%";
+                    }, 10);
+                    
+                    loaderText.innerText = "VERIFIKASI GOOGLE BERHASIL...";
+                    loaderText.style.opacity = 1;
+                    
+                    setTimeout(() => {
+                        loaderText.style.opacity = 0;
+                        setTimeout(() => {
+                            loaderText.innerText = "MENGALIHKAN KE DASHBOARD...";
+                            loaderText.style.opacity = 1;
+                        }, 500);
+                    }, 2000);
+
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 4000); 
+
+                } else {
+                    const errText = await res.text();
+                    errDiv.innerText = "Gagal login via Google: " + errText;
+                    errDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errDiv.innerText = "Gagal terhubung ke server saat login Google.";
+                errDiv.classList.remove('hidden');
+            }
+        }
     </script>
 
     <!-- SCRIPT ANIMASI OPENING 6 DETIK -->
@@ -395,10 +486,8 @@
         const progress = document.getElementById("loader-progress");
         const statusText = document.getElementById("loader-status");
 
-        // 1. Jalankan garis progress bar menjadi 100% (berjalan perlahan)
         setTimeout(() => { progress.style.width = "100%"; }, 100);
 
-        // 2. Skenario ganti-ganti teks status biar terlihat canggih
         setTimeout(() => { statusText.style.opacity = 0; }, 1500);
         setTimeout(() => { 
             statusText.innerText = "MENGAMANKAN KONEKSI..."; 
@@ -411,16 +500,12 @@
             statusText.style.opacity = 1; 
         }, 4000);
 
-        // 3. Selesaikan dan hilangkan animasi setelah tepat 6 detik (6000 ms)
         setTimeout(() => {
             loader.classList.remove("opacity-100");
-            loader.classList.add("opacity-0", "scale-105"); // Efek zoom-out halus
-            
-            // Hapus elemen dari layar sepenuhnya
+            loader.classList.add("opacity-0", "scale-105"); 
             setTimeout(() => { loader.style.display = "none"; }, 1000);
         }, 6000);
 
-        // 4. Logika loader mini saat klik teks/link di halaman (misal: "Ke Halaman Utama")
         document.querySelectorAll("a:not([href='#'])").forEach(link => {
             link.addEventListener("click", function(e) {
                 const href = this.getAttribute("href");
@@ -428,7 +513,7 @@
                     e.preventDefault(); 
                     
                     loader.style.display = "flex";
-                    progress.style.transitionDuration = "0ms"; // Hilangkan delay
+                    progress.style.transitionDuration = "0ms"; 
                     setTimeout(() => progress.style.width = "100%", 50);
                     statusText.innerText = "MEMPROSES...";
                     
