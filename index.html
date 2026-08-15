@@ -486,23 +486,6 @@
                     targetAccSelect.innerHTML += `<option value="${acc.id}">${acc.bank_name}</option>`;
                 });
 
-                // List Akun / Dompet
-                const accContainer = document.getElementById('accounts-list');
-                accContainer.innerHTML = '';
-                globalAccounts.forEach(acc => {
-                    accContainer.innerHTML += `
-                        <div class="flex justify-between items-center bg-[#09090b] p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 font-bold text-xs border border-white/5 uppercase">
-                                    ${acc.bank_name.substring(0,2)}
-                                </div>
-                                <span class="font-semibold text-zinc-200">${acc.bank_name}</span>
-                            </div>
-                            <span class="text-zinc-100 font-bold tracking-tight">Rp ${acc.balance.toLocaleString('id-ID')}</span>
-                        </div>
-                    `;
-                });
-
                 // Tabel Transaksi
                 const txTable = document.getElementById('transaction-table');
                 txTable.innerHTML = '';

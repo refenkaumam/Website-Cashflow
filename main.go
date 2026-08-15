@@ -19,10 +19,7 @@ import (
 	googleAuth "google.golang.org/api/idtoken"
 )
 
-// Kunci rahasia JWT (Pastikan aman di lingkungan produksi)
 var jwtKey = []byte("rahasia-super-aman-cashflow-2026")
-
-// Client ID Google OAuth yang baru saja kamu buat
 const googleClientID = "543295517478-qacl8h87h1j94n9etvflssu5pvi57tsj.apps.googleusercontent.com"
 
 type Claims struct {
@@ -31,19 +28,18 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// Struct untuk menerima data tambah dompet/akun
 type AccountRequest struct {
 	BankName string  `json:"bank_name"`
 	Balance  float64 `json:"balance"`
 }
 
 type Transaction struct {
-	AccountID     int     `json:"account_id"`
-	TargetAccountID *int  `json:"target_account_id"`
-	Type          string  `json:"transaction_type"`
-	Amount        float64 `json:"amount"`
-	AdminFee      float64 `json:"admin_fee"`
-	Desc          string  `json:"description"`
+	AccountID       int     `json:"account_id"`
+	TargetAccountID *int    `json:"target_account_id"`
+	Type            string  `json:"transaction_type"`
+	Amount          float64 `json:"amount"`
+	AdminFee        float64 `json:"admin_fee"`
+	Desc            string  `json:"description"`
 }
 
 type Account struct {
@@ -107,7 +103,6 @@ type GoogleLoginRequest struct {
 
 var db *sql.DB
 
-// toDSN mengubah format connection string URL Railway jadi DSN Go yang aman
 func toDSN(raw string) string {
 	if !strings.HasPrefix(raw, "mysql://") {
 		return raw
@@ -166,7 +161,6 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Railway!")
 
-	// TABEL USERS
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id INT AUTO_INCREMENT PRIMARY KEY,
@@ -180,7 +174,6 @@ func main() {
 		log.Println("Gagal membuat tabel users:", err)
 	}
 
-	// ROUTING HALAMAN
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "home.html")
 	})
@@ -193,12 +186,10 @@ func main() {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	// Endpoint Publik
 	http.HandleFunc("/api/register", rateLimitMiddleware(handleRegister))
 	http.HandleFunc("/api/login", rateLimitMiddleware(handleLogin))
 	http.HandleFunc("/api/google-login", rateLimitMiddleware(handleGoogleLogin))
 
-	// Endpoint Privat (Dilindungi Middleware JWT)
 	http.HandleFunc("/api/account", authMiddleware(handleAddAccount))
 	http.HandleFunc("/api/transaction", authMiddleware(handleTransaction))
 	http.HandleFunc("/api/transaction/delete", authMiddleware(handleDeleteTransaction))
@@ -218,9 +209,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-// =========================================================================
-// FITUR KEAMANAN: RATE LIMITER
-// =========================================================================
 var (
 	ipRates = make(map[string]*rateData)
 	rateMu  sync.Mutex
@@ -264,7 +252,6 @@ func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// --- MIDDLEWARE KEAMANAN JWT ---
 func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -297,7 +284,6 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// --- FUNGSI REGISTER ---
 func handleRegister(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -343,7 +329,6 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Registrasi berhasil"})
 }
 
-// --- FUNGSI LOGIN GOOGLE ---
 func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -432,7 +417,6 @@ func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler Login Biasa
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -479,8 +463,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		"token":   tokenString,
 	})
 }
-
-// --- Handler Cashflow ---
 
 func handleAddAccount(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(int)
@@ -610,7 +592,6 @@ func handleDeletePiutang(w http.ResponseWriter, r *http.Request) {
 func handleHistory(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(int)
 	
-	// Ambil parameter filter dari URL
 	startDate := r.URL.Query().Get("start")
 	endDate := r.URL.Query().Get("end")
 	querySearch := r.URL.Query().Get("q")
@@ -652,7 +633,6 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsPiutang.Close()
 	}
 
-	// Query Transaksi Dinamis dengan Filter Tanggal dan Pencarian Keterangan
 	sqlQuery := "SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i') FROM transactions t JOIN accounts a ON t.account_id = a.id WHERE t.user_id = ?"
 	args := []interface{}{userID}
 
