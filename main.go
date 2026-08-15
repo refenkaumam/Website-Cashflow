@@ -196,7 +196,7 @@ func main() {
 	// Endpoint Publik
 	http.HandleFunc("/api/register", rateLimitMiddleware(handleRegister))
 	http.HandleFunc("/api/login", rateLimitMiddleware(handleLogin))
-	http.HandleFunc("/api/google-login", rateLimitMiddleware(handleGoogleLogin)) // ENDPOINT GOOGLE SIGN-IN
+	http.HandleFunc("/api/google-login", rateLimitMiddleware(handleGoogleLogin))
 
 	// Endpoint Privat (Dilindungi Middleware JWT)
 	http.HandleFunc("/api/account", authMiddleware(handleAddAccount))
@@ -250,7 +250,7 @@ func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if v.count >= 20 { // Dinaikkan sedikit batasnya agar aman untuk proses redirect Google
+		if v.count >= 20 {
 			rateMu.Unlock()
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusTooManyRequests)
@@ -359,7 +359,6 @@ func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Memverifikasi keaslian token langsung ke server Google
 	payload, err := googleAuth.Validate(context.Background(), req.Token, googleClientID)
 	if err != nil {
 		log.Println("Google Token Validation Error:", err)
@@ -370,11 +369,9 @@ func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	email := payload.Claims["email"].(string)
 	name, ok := payload.Claims["name"].(string)
 	if !ok || name == "" {
-		// Jika nama tidak ada dari Google, gunakan bagian depan email sebagai username
 		name = strings.Split(email, "@")[0]
 	}
 
-	// Bersihkan spasi atau karakter unik jika ada pada username dari Google
 	name = strings.ReplaceAll(name, " ", "")
 	if len(name) > 40 {
 		name = name[:40]
@@ -383,14 +380,10 @@ func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	var userID int
 	var dbUsername string
 
-	// Cek apakah user dengan email tersebut sudah pernah terdaftar sebelumnya
 	err = db.QueryRow("SELECT id, username FROM users WHERE email = ?", email).Scan(&userID, &dbUsername)
 	if err == sql.ErrNoRows {
-		// Jika belum pernah daftar, otomatis daftarkan akun baru ke database!
-		// Password diisi acak/dummy karena user login menggunakan akun Google
 		dummyPassword, _ := bcrypt.GenerateFromPassword([]byte("GoogleSecureLogin2026!"), bcrypt.DefaultCost)
 		
-		// Pastikan username unik (jika kembar, tambahkan angka acak waktu)
 		uniqueUsername := name
 		var checkID int
 		errCheck := db.QueryRow("SELECT id FROM users WHERE username = ?", uniqueUsername).Scan(&checkID)
@@ -409,14 +402,12 @@ func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 		userID = int(newID)
 		dbUsername = uniqueUsername
 
-		// Buatkan dompet default otomatis
 		db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0.00, ?)", userID)
 	} else if err != nil {
 		http.Error(w, "Kesalahan pada database", http.StatusInternalServerError)
 		return
 	}
 
-	// Terbitkan Token JWT Sesi Pengguna
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID:   userID,
@@ -618,6 +609,12 @@ func handleDeletePiutang(w http.ResponseWriter, r *http.Request) {
 
 func handleHistory(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(int)
+	
+	// Ambil parameter filter dari URL
+	startDate := r.URL.Query().Get("start")
+	endDate := r.URL.Query().Get("end")
+	querySearch := r.URL.Query().Get("q")
+
 	w.Header().Set("Content-Type", "application/json")
 	var data DashboardData
 	var totalBal, totalBill, totalPiutang float64
@@ -655,7 +652,26 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsPiutang.Close()
 	}
 
-	rowsTx, err := db.Query("SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i') FROM transactions t JOIN accounts a ON t.account_id = a.id WHERE t.user_id = ? ORDER BY t.created_at DESC LIMIT 50", userID)
+	// Query Transaksi Dinamis dengan Filter Tanggal dan Pencarian Keterangan
+	sqlQuery := "SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i') FROM transactions t JOIN accounts a ON t.account_id = a.id WHERE t.user_id = ?"
+	args := []interface{}{userID}
+
+	if startDate != "" {
+		sqlQuery += " AND t.created_at >= ?"
+		args = append(args, startDate+" 00:00:00")
+	}
+	if endDate != "" {
+		sqlQuery += " AND t.created_at <= ?"
+		args = append(args, endDate+" 23:59:59")
+	}
+	if querySearch != "" {
+		sqlQuery += " AND t.description LIKE ?"
+		args = append(args, "%"+querySearch+"%")
+	}
+
+	sqlQuery += " ORDER BY t.created_at DESC LIMIT 50"
+
+	rowsTx, err := db.Query(sqlQuery, args...)
 	if err == nil {
 		for rowsTx.Next() {
 			var tx TransactionRow

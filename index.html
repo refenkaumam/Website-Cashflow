@@ -116,7 +116,6 @@
             <!-- 1. Form Transaksi -->
             <div data-aos="fade-up" data-aos-delay="100" class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
-                    <!-- DIGANTI MENJADI GLOWING DOT CYAN -->
                     <h3 class="text-base font-semibold mb-6 text-cyan-400 flex items-center gap-3">
                         <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_12px_2px_rgba(34,211,238,0.6)]"></span> Tambah Transaksi
                     </h3>
@@ -159,7 +158,6 @@
             <!-- 2. Form Tagihan / Cicilan -->
             <div data-aos="fade-up" data-aos-delay="200" class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
-                    <!-- DIGANTI MENJADI GLOWING DOT ROSE -->
                     <h3 class="text-base font-semibold mb-6 text-rose-400 flex items-center gap-3">
                         <span class="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_12px_2px_rgba(251,113,133,0.6)]"></span> Tambah Tagihan / Cicilan
                     </h3>
@@ -190,7 +188,6 @@
             <!-- 3. Form Piutang -->
             <div data-aos="fade-up" data-aos-delay="300" class="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm flex flex-col justify-between">
                 <div>
-                    <!-- DIGANTI MENJADI GLOWING DOT AMBER -->
                     <h3 class="text-base font-semibold mb-6 text-amber-400 flex items-center gap-3">
                         <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_12px_2px_rgba(251,191,36,0.6)]"></span> Tambah Piutang
                     </h3>
@@ -217,7 +214,20 @@
             
             <!-- Riwayat Transaksi -->
             <div data-aos="fade-up" data-aos-delay="100" class="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
-                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Riwayat Transaksi Terbaru</h3>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                    <h3 class="text-lg font-semibold text-cyan-400">Riwayat Transaksi Terbaru</h3>
+                </div>
+
+                <!-- PANEL FILTER & PENCARIAN -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-zinc-950/40 p-3 rounded-2xl border border-white/5">
+                    <input type="date" id="filterStart" class="bg-zinc-900 text-zinc-200 rounded-xl px-3 py-2 border border-white/10 text-xs focus:outline-none focus:border-cyan-500">
+                    <input type="date" id="filterEnd" class="bg-zinc-900 text-zinc-200 rounded-xl px-3 py-2 border border-white/10 text-xs focus:outline-none focus:border-cyan-500">
+                    <div class="flex gap-2">
+                        <input type="text" id="searchQuery" placeholder="Cari ket..." class="w-full bg-zinc-900 text-zinc-200 rounded-xl px-3 py-2 border border-white/10 text-xs focus:outline-none focus:border-cyan-500">
+                        <button onclick="loadDashboard()" class="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold px-3 py-2 rounded-xl text-xs transition shadow-md shadow-cyan-500/10">Cari</button>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto max-h-96 overflow-y-auto pr-2">
                     <table class="w-full text-left text-sm">
                         <thead>
@@ -430,11 +440,24 @@
 
         async function loadDashboard() {
             try {
-                // Mengambil data dengan membawa Header Satpam Token JWT
-                const response = await fetch('/api/history', { headers: authHeaders });
+                // Ambil nilai dari input filter
+                const start = document.getElementById('filterStart').value;
+                const end = document.getElementById('filterEnd').value;
+                const q = document.getElementById('searchQuery').value;
+
+                let url = '/api/history';
+                const params = new URLSearchParams();
+                if (start) params.append('start', start);
+                if (end) params.append('end', end);
+                if (q) params.append('q', q);
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+
+                // Mengambil data dengan membawa Header Satpam Token JWT & parameter filter
+                const response = await fetch(url, { headers: authHeaders });
                 
                 if (response.status === 401) {
-                    // Token kedaluwarsa atau tidak sah
                     alert('Sesi Anda telah habis. Silakan login kembali.');
                     logout();
                     return;
@@ -504,7 +527,7 @@
                         `;
                     });
                 } else {
-                    txTable.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-zinc-600">Belum ada aktivitas transaksi.</td></tr>`;
+                    txTable.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-zinc-600">Tidak ada transaksi yang cocok.</td></tr>`;
                 }
 
                 // Tabel Tagihan
@@ -591,13 +614,12 @@
             try {
                 const response = await fetch('/api/account', {
                     method: 'POST',
-                    headers: authHeaders, // Menggunakan token JWT yang sama
+                    headers: authHeaders,
                     body: JSON.stringify({ bank_name: bankName, balance: balance })
                 });
                 
                 if (response.ok) {
                     closeWalletModal();
-                    // Load ulang data dasbor secara mulus tanpa layar berkedip
                     loadDashboard(); 
                 } else {
                     alert('Gagal menambahkan dompet.');
@@ -621,7 +643,7 @@
 
             const res = await fetch('/api/transaction', {
                 method: 'POST',
-                headers: authHeaders, // Kirim Token JWT
+                headers: authHeaders,
                 body: JSON.stringify(payload)
             });
 
@@ -646,7 +668,7 @@
 
             const res = await fetch('/api/bill', {
                 method: 'POST',
-                headers: authHeaders, // Kirim Token JWT
+                headers: authHeaders,
                 body: JSON.stringify(payload)
             });
 
@@ -668,7 +690,7 @@
 
             const res = await fetch('/api/piutang', {
                 method: 'POST',
-                headers: authHeaders, // Kirim Token JWT
+                headers: authHeaders,
                 body: JSON.stringify(payload)
             });
 
@@ -680,7 +702,6 @@
             }
         }
 
-        // Fungsi Hapus (Transaksi, Tagihan, Piutang) membawa Token JWT
         async function deleteTransaction(id) {
             if (confirm('Yakin ingin menghapus transaksi ini?')) {
                 await fetch(`/api/transaction/delete?id=${id}`, { method: 'DELETE', headers: authHeaders });
@@ -721,8 +742,8 @@
 
         // Inisialisasi animasi gulir (Scroll Animation) dengan AOS
         AOS.init({
-            once: true, // Animasi hanya berjalan sekali saat di-scroll
-            offset: 50, // Mulai animasi ketika elemen berjarak 50px dari bawah layar
+            once: true,
+            offset: 50,
         });
 
         // Script Page Loader (Fade-in / Fade-out)
