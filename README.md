@@ -36,7 +36,7 @@
 | **Deployment** | Railway.app |
 
 ## 🚀 Preview
-*(Masukkan GIF atau Screenshot dashboard-mu di sini untuk menarik perhatian!)*
+![CashFlow Demo](preview_cashflow.gif)
 <!-- Contoh: ![Dashboard](path/ke/gambar-mu.gif) -->
 
 ## ⚙️ Installation
