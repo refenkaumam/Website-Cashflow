@@ -1,39 +1,46 @@
-# 💰 Personal Cashflow & Financial Dashboard
+<p align="center">
+  <h1 align="center">💸 CashFlow - Financial Intelligence</h1>
+  <p align="center">Aplikasi manajemen keuangan pribadi modern dengan performa tinggi & keamanan tingkat lanjut.</p>
+</p>
 
-Aplikasi web manajemen keuangan pribadi (Cashflow) berbasis **Golang (Go)** dan **Tailwind CSS**. Dilengkapi dengan sistem autentikasi multi-user, pencatatan transaksi masuk/keluar, transfer antar akun, manajemen cicilan/tagihan, catatan piutang, sapaan personal, hingga widget motivasi menabung otomatis dari AI.
-
----
-
-## ✨ Fitur Utama
-
-- **Sistem Autentikasi Pengguna:** Login dan Registrasi akun personal dengan penyimpanan sesi aman.
-- **Dashboard Finansial Komprehensif:** Kartu ringkasan Total Saldo Bersih, Saldo Bank, Total Tagihan/Cicilan, dan Total Piutang.
-- **Pencatatan Transaksi:** Input Pemasukan, Pengeluaran, dan Transfer antar akun lengkap dengan biaya admin.
-- **Manajemen Tagihan & Piutang:** Melacak cicilan bulanan, paylater, serta daftar nama peminjam.
-
----
-
-## 📸 Preview Tampilan Aplikasi
-
-### 1. Halaman Login / Registrasi
-![Preview Login](./Preview-login_cashflow.png)
-
-### 2. Halaman Dashboard Utama
-![Preview Dashboard](./Preview-dashboard-cashflow.png)
----
-
-## 🛠️ Teknologi yang Digunakan
-
-- **Backend:** Go (Golang) (`net/http`, `database/sql`)
-- **Database:** MySQL / Aiven Cloud (`go-sql-driver/mysql`)
-- **Keamanan:** Golang Crypto (`golang.org/x/crypto/bcrypt`)
-- **Frontend:** HTML5, Tailwind CSS (via CDN v4)
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Golang" />
+  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+  <img src="https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/Railway-131313?style=for-the-badge&logo=railway&logoColor=white" alt="Railway" />
+</p>
 
 ---
 
-## ⚙️ Cara Menjalankan Project (Local Installation)
+## 📖 About
+**CashFlow** adalah solusi cerdas untuk mengelola keuangan pribadi. Dibangun dengan bahasa pemrograman Go (Golang) untuk performa backend yang super cepat, dikombinasikan dengan antarmuka yang elegan menggunakan Tailwind CSS. Proyek ini dirancang untuk mereka yang menginginkan aplikasi finansial yang ringan, aman, dan dapat diandalkan.
 
-1. **Siapkan Database MySQL:** Pastikan XAMPP MySQL aktif, lalu buat database baru bernama **`cashflow_db`**.
-2. **Install Dependencies Go:** 
+## ✨ Key Features
+- **Modern Authentication:** Login aman via **Google OAuth2** atau sistem registrasi standar dengan enkripsi password (Bcrypt).
+- **Security First:** Dilindungi dengan *Rate Limiting* untuk mencegah serangan *Brute Force* dan *Spam*.
+- **Comprehensive Financial Tracking:**
+  - Pemasukan & Pengeluaran.
+  - Transfer antar dompet (dengan perhitungan biaya admin).
+  - Manajemen cicilan/tagihan (Bills) dengan tenor otomatis.
+  - Pencatatan piutang.
+- **Smart Dashboard:** Ringkasan aset bersih (*Net Balance*) dan total grand total keuangan dalam satu pandangan.
+- **Responsive UI:** Tampilan *dark mode* yang elegan dengan animasi *splash screen* 6 detik yang profesional.
+
+## 🛠 Tech Stack
+| Component | Technology |
+| :--- | :--- |
+| **Backend** | Go (Golang), net/http, jwt-go |
+| **Database** | MySQL (Railway) |
+| **Security** | Bcrypt, Rate Limiting, Google OAuth2 |
+| **Frontend** | HTML5, Tailwind CSS |
+| **Deployment** | Railway.app |
+
+## 🚀 Preview
+*(Masukkan GIF atau Screenshot dashboard-mu di sini untuk menarik perhatian!)*
+<!-- Contoh: ![Dashboard](path/ke/gambar-mu.gif) -->
+
+## ⚙️ Installation
+1. **Clone Repository**
    ```bash
-   go mod tidy
+   git clone [https://github.com/username/cashflow.git](https://github.com/username/cashflow.git)
+   cd cashflow
