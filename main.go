@@ -19,10 +19,7 @@ import (
 	googleAuth "google.golang.org/api/idtoken"
 )
 
-// Kunci rahasia JWT (Pastikan aman di lingkungan produksi)
 var jwtKey = []byte("rahasia-super-aman-cashflow-2026")
-
-// Client ID Google OAuth
 const googleClientID = "543295517478-qacl8h87h1j94n9etvflssu5pvi57tsj.apps.googleusercontent.com"
 
 type Claims struct {
@@ -31,50 +28,49 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// Struct untuk menerima data tambah dompet/akun
 type AccountRequest struct {
-	BankName string `json:"bank_name"`
-	Balance  int64  `json:"balance"` // DIUBAH KE int64
+	BankName string  `json:"bank_name"`
+	Balance  float64 `json:"balance"`
 }
 
 type Transaction struct {
-	AccountID       int    `json:"account_id"`
-	TargetAccountID *int   `json:"target_account_id"`
-	Type            string `json:"transaction_type"`
-	Amount          int64  `json:"amount"`    // DIUBAH KE int64
-	AdminFee        int64  `json:"admin_fee"` // DIUBAH KE int64
-	Desc            string `json:"description"`
+	AccountID       int     `json:"account_id"`
+	TargetAccountID *int    `json:"target_account_id"`
+	Type            string  `json:"transaction_type"`
+	Amount          float64 `json:"amount"`
+	AdminFee        float64 `json:"admin_fee"`
+	Desc            string  `json:"description"`
 }
 
 type Account struct {
-	ID      int    `json:"id"`
-	Name    string `json:"bank_name"`
-	Balance int64  `json:"balance"` // DIUBAH KE int64
+	ID      int     `json:"id"`
+	Name    string  `json:"bank_name"`
+	Balance float64 `json:"balance"`
 }
 
 type TransactionRow struct {
-	ID        int    `json:"id"`
-	BankName  string `json:"bank_name"`
-	Type      string `json:"transaction_type"`
-	Amount    int64  `json:"amount"`    // DIUBAH KE int64
-	AdminFee  int64  `json:"admin_fee"` // DIUBAH KE int64
-	Desc      string `json:"description"`
-	CreatedAt string `json:"created_at"`
+	ID        int     `json:"id"`
+	BankName  string  `json:"bank_name"`
+	Type      string  `json:"transaction_type"`
+	Amount    float64 `json:"amount"`
+	AdminFee  float64 `json:"admin_fee"`
+	Desc      string  `json:"description"`
+	CreatedAt string  `json:"created_at"`
 }
 
 type Bill struct {
-	ID            int    `json:"id"`
-	Platform      string `json:"platform"`
-	ItemName      string `json:"item_name"`
-	MonthlyAmount int64  `json:"monthly_amount"` // DIUBAH KE int64
-	Tenor         int    `json:"tenor"`
-	TotalAmount   int64  `json:"total_amount"` // DIUBAH KE int64
+	ID            int     `json:"id"`
+	Platform      string  `json:"platform"`
+	ItemName      string  `json:"item_name"`
+	MonthlyAmount float64 `json:"monthly_amount"`
+	Tenor         int     `json:"tenor"`
+	TotalAmount   float64 `json:"total_amount"`
 }
 
 type Piutang struct {
-	ID     int    `json:"id"`
-	Name   string `json:"name"`
-	Amount int64  `json:"amount"` // DIUBAH KE int64
+	ID     int     `json:"id"`
+	Name   string  `json:"name"`
+	Amount float64 `json:"amount"`
 }
 
 type DashboardData struct {
@@ -82,17 +78,17 @@ type DashboardData struct {
 	Transactions []TransactionRow `json:"transactions"`
 	Bills        []Bill           `json:"bills"`
 	Piutangs     []Piutang        `json:"piutangs"`
-	TotalBalance int64            `json:"total_balance"` // DIUBAH KE int64
-	TotalBill    int64            `json:"total_bill"`    // DIUBAH KE int64
-	TotalPiutang int64            `json:"total_piutang"` // DIUBAH KE int64
-	NetBalance   int64            `json:"net_balance"`   // DIUBAH KE int64
-	GrandTotal   int64            `json:"grand_total"`   // DIUBAH KE int64
+	TotalBalance float64          `json:"total_balance"`
+	TotalBill    float64          `json:"total_bill"`
+	TotalPiutang float64          `json:"total_piutang"`
+	NetBalance   float64          `json:"net_balance"`
+	GrandTotal   float64          `json:"grand_total"`
 }
 
 type PayBillRequest struct {
-	BillID     int   `json:"bill_id"`
-	AccountID  int   `json:"account_id"`
-	PaidAmount int64 `json:"paid_amount"` // DIUBAH KE int64
+	BillID     int     `json:"bill_id"`
+	AccountID  int     `json:"account_id"`
+	PaidAmount float64 `json:"paid_amount"`
 }
 
 type User struct {
@@ -160,7 +156,6 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Railway!")
 
-	// Pastikan saldo / uang di Database bertipe DECIMAL atau INT yang cukup besar
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id INT AUTO_INCREMENT PRIMARY KEY,
@@ -507,7 +502,7 @@ func handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	tx, _ := db.Begin()
 	var accID int
 	var tType string
-	var amount, adminFee int64 // DIUBAH KE int64
+	var amount, adminFee float64
 
 	err := tx.QueryRow("SELECT account_id, transaction_type, amount, admin_fee FROM transactions WHERE id = ? AND user_id = ?", idStr, userID).Scan(&accID, &tType, &amount, &adminFee)
 	if err == nil {
@@ -527,7 +522,7 @@ func handleBill(w http.ResponseWriter, r *http.Request) {
 	var b Bill
 	json.NewDecoder(r.Body).Decode(&b)
 	if b.Tenor > 0 {
-		b.MonthlyAmount = b.TotalAmount / int64(b.Tenor)
+		b.MonthlyAmount = b.TotalAmount / float64(b.Tenor)
 	}
 	db.Exec("INSERT INTO bills (platform, item_name, monthly_amount, tenor, total_amount, user_id) VALUES (?, ?, ?, ?, ?, ?)", b.Platform, b.ItemName, b.MonthlyAmount, b.Tenor, b.TotalAmount, userID)
 	w.WriteHeader(http.StatusCreated)
@@ -545,7 +540,7 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&req)
 	tx, _ := db.Begin()
 	var platform, itemName string
-	var currentTotal int64 // DIUBAH KE int64
+	var currentTotal float64
 	var tenor int
 
 	err := tx.QueryRow("SELECT platform, item_name, total_amount, tenor FROM bills WHERE id = ? AND user_id = ?", req.BillID, userID).Scan(&platform, &itemName, &currentTotal, &tenor)
@@ -564,7 +559,7 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	if newTenor <= 0 || newTotal <= 0 {
 		tx.Exec("DELETE FROM bills WHERE id = ? AND user_id = ?", req.BillID, userID)
 	} else {
-		newMonthly := newTotal / int64(newTenor)
+		newMonthly := newTotal / float64(newTenor)
 		tx.Exec("UPDATE bills SET tenor = ?, total_amount = ?, monthly_amount = ? WHERE id = ? AND user_id = ?", newTenor, newTotal, newMonthly, req.BillID, userID)
 	}
 	tx.Commit()
@@ -594,7 +589,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	var data DashboardData
-	var totalBal, totalBill, totalPiutang int64 // DIUBAH KE int64
+	var totalBal, totalBill, totalPiutang float64
 
 	rowsAcc, err := db.Query("SELECT id, bank_name, balance FROM accounts WHERE user_id = ?", userID)
 	if err == nil {
