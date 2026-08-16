@@ -138,11 +138,11 @@
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Jumlah (Rp)</label>
-                            <input type="number" id="tx-amount" required placeholder="50000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all">
+                            <input type="text" inputmode="numeric" id="tx-amount" oninput="formatCurrency(this)" required placeholder="50.000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all">
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Biaya Admin</label>
-                            <input type="number" id="tx-admin" value="0" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all">
+                            <input type="text" inputmode="numeric" id="tx-admin" oninput="formatCurrency(this)" value="0" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 transition-all">
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Keterangan</label>
@@ -172,7 +172,7 @@
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Total Tagihan (Rp)</label>
-                            <input type="number" id="bill-total" required placeholder="1200000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-400 transition-all">
+                            <input type="text" inputmode="numeric" id="bill-total" oninput="formatCurrency(this)" required placeholder="1.200.000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-rose-400 transition-all">
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Tenor (Bulan)</label>
@@ -198,7 +198,7 @@
                         </div>
                         <div>
                             <label class="block text-zinc-500 text-xs font-medium mb-1.5 uppercase tracking-wider">Jumlah Piutang (Rp)</label>
-                            <input type="number" id="piutang-amount" required placeholder="100000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-400 transition-all">
+                            <input type="text" inputmode="numeric" id="piutang-amount" oninput="formatCurrency(this)" required placeholder="100.000" class="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-amber-400 transition-all">
                         </div>
                     </form>
                 </div>
@@ -309,7 +309,7 @@
                 </div>
                 <div>
                     <label class="block text-zinc-500 text-xs font-semibold mb-2 uppercase tracking-wider">Saldo Awal (Rp)</label>
-                    <input type="number" id="new-wallet-balance" required placeholder="0" value="0" class="w-full bg-[#09090b] border border-white/10 rounded-2xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 transition-all">
+                    <input type="text" inputmode="numeric" id="new-wallet-balance" oninput="formatCurrency(this)" required placeholder="0" value="0" class="w-full bg-[#09090b] border border-white/10 rounded-2xl px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500/50 transition-all">
                 </div>
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="closeWalletModal()" class="w-1/2 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3 rounded-xl text-sm transition">Batal</button>
@@ -353,6 +353,22 @@
             window.location.href = '/';
         }
 
+        // FUNGSI BARU: Format nominal uang dengan titik otomatis saat diketik
+        function formatCurrency(input) {
+            let value = input.value.replace(/\D/g, ''); // Hapus semua karakter yang bukan angka
+            if (value === '') {
+                input.value = '';
+                return;
+            }
+            input.value = new Intl.NumberFormat('id-ID').format(value);
+        }
+
+        // FUNGSI BARU: Ubah string berformat (1.000.000) kembali menjadi angka murni (1000000) untuk backend
+        function parseCurrency(str) {
+            if (!str) return 0;
+            return parseFloat(str.replace(/\./g, '')) || 0;
+        }
+
         let globalAccounts = [];
 
         function toggleTargetAccount() {
@@ -368,7 +384,6 @@
         let cashflowChartInstance = null;
 
         function renderChart(transactions) {
-            // FIX: Mencegah error crash jika transaksi bernilai null/undefined
             if (!transactions) transactions = [];
 
             const ctx = document.getElementById('cashflowChart').getContext('2d');
@@ -602,7 +617,9 @@
         async function submitWallet(e) {
             e.preventDefault();
             const bankName = document.getElementById('new-wallet-name').value;
-            const balance = parseFloat(document.getElementById('new-wallet-balance').value) || 0;
+            // Gunakan parseCurrency untuk ubah string ber-titik jadi angka
+            const balance = parseCurrency(document.getElementById('new-wallet-balance').value);
+            
             try {
                 const response = await fetch('/api/account', {
                     method: 'POST',
@@ -626,8 +643,9 @@
                 account_id: parseInt(document.getElementById('tx-account').value),
                 target_account_id: document.getElementById('tx-type').value === 'TRANSFER' ? parseInt(document.getElementById('tx-target-account').value) : null,
                 transaction_type: document.getElementById('tx-type').value,
-                amount: parseFloat(document.getElementById('tx-amount').value),
-                admin_fee: parseFloat(document.getElementById('tx-admin').value) || 0,
+                // Gunakan parseCurrency agar tidak error saat dikirim ke Backend
+                amount: parseCurrency(document.getElementById('tx-amount').value),
+                admin_fee: parseCurrency(document.getElementById('tx-admin').value),
                 description: document.getElementById('tx-desc').value
             };
 
@@ -651,7 +669,8 @@
             const payload = {
                 platform: document.getElementById('bill-platform').value,
                 item_name: document.getElementById('bill-item').value,
-                total_amount: parseFloat(document.getElementById('bill-total').value),
+                // Gunakan parseCurrency
+                total_amount: parseCurrency(document.getElementById('bill-total').value),
                 tenor: parseInt(document.getElementById('bill-tenor').value)
             };
 
@@ -673,7 +692,8 @@
             e.preventDefault();
             const payload = {
                 name: document.getElementById('piutang-name').value,
-                amount: parseFloat(document.getElementById('piutang-amount').value)
+                // Gunakan parseCurrency
+                amount: parseCurrency(document.getElementById('piutang-amount').value)
             };
 
             const res = await fetch('/api/piutang', {
