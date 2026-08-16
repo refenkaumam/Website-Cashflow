@@ -22,7 +22,7 @@ import (
 // Kunci rahasia JWT (Pastikan aman di lingkungan produksi)
 var jwtKey = []byte("rahasia-super-aman-cashflow-2026")
 
-// Client ID Google OAuth yang baru saja kamu buat
+// Client ID Google OAuth
 const googleClientID = "543295517478-qacl8h87h1j94n9etvflssu5pvi57tsj.apps.googleusercontent.com"
 
 type Claims struct {
@@ -33,48 +33,48 @@ type Claims struct {
 
 // Struct untuk menerima data tambah dompet/akun
 type AccountRequest struct {
-	BankName string  `json:"bank_name"`
-	Balance  float64 `json:"balance"`
+	BankName string `json:"bank_name"`
+	Balance  int64  `json:"balance"` // DIUBAH KE int64
 }
 
 type Transaction struct {
-	AccountID     int     `json:"account_id"`
-	TargetAccountID *int  `json:"target_account_id"`
-	Type          string  `json:"transaction_type"`
-	Amount        float64 `json:"amount"`
-	AdminFee      float64 `json:"admin_fee"`
-	Desc          string  `json:"description"`
+	AccountID       int    `json:"account_id"`
+	TargetAccountID *int   `json:"target_account_id"`
+	Type            string `json:"transaction_type"`
+	Amount          int64  `json:"amount"`    // DIUBAH KE int64
+	AdminFee        int64  `json:"admin_fee"` // DIUBAH KE int64
+	Desc            string `json:"description"`
 }
 
 type Account struct {
-	ID      int     `json:"id"`
-	Name    string  `json:"bank_name"`
-	Balance float64 `json:"balance"`
+	ID      int    `json:"id"`
+	Name    string `json:"bank_name"`
+	Balance int64  `json:"balance"` // DIUBAH KE int64
 }
 
 type TransactionRow struct {
-	ID        int     `json:"id"`
-	BankName  string  `json:"bank_name"`
-	Type      string  `json:"transaction_type"`
-	Amount    float64 `json:"amount"`
-	AdminFee  float64 `json:"admin_fee"`
-	Desc      string  `json:"description"`
-	CreatedAt string  `json:"created_at"`
+	ID        int    `json:"id"`
+	BankName  string `json:"bank_name"`
+	Type      string `json:"transaction_type"`
+	Amount    int64  `json:"amount"`    // DIUBAH KE int64
+	AdminFee  int64  `json:"admin_fee"` // DIUBAH KE int64
+	Desc      string `json:"description"`
+	CreatedAt string `json:"created_at"`
 }
 
 type Bill struct {
-	ID            int     `json:"id"`
-	Platform      string  `json:"platform"`
-	ItemName      string  `json:"item_name"`
-	MonthlyAmount float64 `json:"monthly_amount"`
-	Tenor         int     `json:"tenor"`
-	TotalAmount   float64 `json:"total_amount"`
+	ID            int    `json:"id"`
+	Platform      string `json:"platform"`
+	ItemName      string `json:"item_name"`
+	MonthlyAmount int64  `json:"monthly_amount"` // DIUBAH KE int64
+	Tenor         int    `json:"tenor"`
+	TotalAmount   int64  `json:"total_amount"` // DIUBAH KE int64
 }
 
 type Piutang struct {
-	ID     int     `json:"id"`
-	Name   string  `json:"name"`
-	Amount float64 `json:"amount"`
+	ID     int    `json:"id"`
+	Name   string `json:"name"`
+	Amount int64  `json:"amount"` // DIUBAH KE int64
 }
 
 type DashboardData struct {
@@ -82,17 +82,17 @@ type DashboardData struct {
 	Transactions []TransactionRow `json:"transactions"`
 	Bills        []Bill           `json:"bills"`
 	Piutangs     []Piutang        `json:"piutangs"`
-	TotalBalance float64          `json:"total_balance"`
-	TotalBill    float64          `json:"total_bill"`
-	TotalPiutang float64          `json:"total_piutang"`
-	NetBalance   float64          `json:"net_balance"`
-	GrandTotal   float64          `json:"grand_total"`
+	TotalBalance int64            `json:"total_balance"` // DIUBAH KE int64
+	TotalBill    int64            `json:"total_bill"`    // DIUBAH KE int64
+	TotalPiutang int64            `json:"total_piutang"` // DIUBAH KE int64
+	NetBalance   int64            `json:"net_balance"`   // DIUBAH KE int64
+	GrandTotal   int64            `json:"grand_total"`   // DIUBAH KE int64
 }
 
 type PayBillRequest struct {
-	BillID     int     `json:"bill_id"`
-	AccountID  int     `json:"account_id"`
-	PaidAmount float64 `json:"paid_amount"`
+	BillID     int   `json:"bill_id"`
+	AccountID  int   `json:"account_id"`
+	PaidAmount int64 `json:"paid_amount"` // DIUBAH KE int64
 }
 
 type User struct {
@@ -107,21 +107,17 @@ type GoogleLoginRequest struct {
 
 var db *sql.DB
 
-// toDSN mengubah format connection string URL Railway jadi DSN Go yang aman
 func toDSN(raw string) string {
 	if !strings.HasPrefix(raw, "mysql://") {
 		return raw
 	}
-
 	trimmed := strings.TrimPrefix(raw, "mysql://")
 	lastAtIndex := strings.LastIndex(trimmed, "@")
 	if lastAtIndex == -1 {
 		return raw
 	}
-
 	credentials := trimmed[:lastAtIndex]
 	rest := trimmed[lastAtIndex+1:]
-
 	slashIndex := strings.Index(rest, "/")
 	var host, dbName string
 	if slashIndex == -1 {
@@ -134,11 +130,9 @@ func toDSN(raw string) string {
 			dbName = dbName[:qIndex]
 		}
 	}
-
 	if dbName == "" {
 		dbName = "railway"
 	}
-
 	return fmt.Sprintf("%s@tcp(%s)/%s?parseTime=true", credentials, host, dbName)
 }
 
@@ -166,7 +160,7 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Railway!")
 
-	// TABEL USERS
+	// Pastikan saldo / uang di Database bertipe DECIMAL atau INT yang cukup besar
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id INT AUTO_INCREMENT PRIMARY KEY,
@@ -180,25 +174,20 @@ func main() {
 		log.Println("Gagal membuat tabel users:", err)
 	}
 
-	// ROUTING HALAMAN
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "home.html")
 	})
-
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "login.html")
 	})
-
 	http.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	// Endpoint Publik
 	http.HandleFunc("/api/register", rateLimitMiddleware(handleRegister))
 	http.HandleFunc("/api/login", rateLimitMiddleware(handleLogin))
 	http.HandleFunc("/api/google-login", rateLimitMiddleware(handleGoogleLogin))
 
-	// Endpoint Privat (Dilindungi Middleware JWT)
 	http.HandleFunc("/api/account", authMiddleware(handleAddAccount))
 	http.HandleFunc("/api/transaction", authMiddleware(handleTransaction))
 	http.HandleFunc("/api/transaction/delete", authMiddleware(handleDeleteTransaction))
@@ -213,14 +202,10 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-
 	log.Println("Server berjalan di port", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-// =========================================================================
-// FITUR KEAMANAN: RATE LIMITER
-// =========================================================================
 var (
 	ipRates = make(map[string]*rateData)
 	rateMu  sync.Mutex
@@ -257,14 +242,12 @@ func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			w.Write([]byte("Terlalu banyak percobaan. Harap tunggu 1 menit lagi."))
 			return
 		}
-
 		v.count++
 		rateMu.Unlock()
 		next(w, r)
 	}
 }
 
-// --- MIDDLEWARE KEAMANAN JWT ---
 func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -297,7 +280,6 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// --- FUNGSI REGISTER ---
 func handleRegister(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -337,13 +319,12 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newUserID, _ := res.LastInsertId()
-	db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0.00, ?)", newUserID)
+	db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0, ?)", newUserID)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Registrasi berhasil"})
 }
 
-// --- FUNGSI LOGIN GOOGLE ---
 func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -402,7 +383,7 @@ func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 		userID = int(newID)
 		dbUsername = uniqueUsername
 
-		db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0.00, ?)", userID)
+		db.Exec("INSERT INTO accounts (bank_name, balance, user_id) VALUES ('Dompet Utama', 0, ?)", userID)
 	} else if err != nil {
 		http.Error(w, "Kesalahan pada database", http.StatusInternalServerError)
 		return
@@ -432,7 +413,6 @@ func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler Login Biasa
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -480,8 +460,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// --- Handler Cashflow ---
-
 func handleAddAccount(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(int)
 	var req AccountRequest
@@ -513,7 +491,7 @@ func handleTransaction(w http.ResponseWriter, r *http.Request) {
 		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?", t.Amount, t.AccountID, userID)
 	} else if t.Type == "EXPENSE" {
 		tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ? AND user_id = ?", t.Amount+t.AdminFee, t.AccountID, userID)
-	} else if t.Type == "TRANSFER" {
+	} else if t.Type == "TRANSFER" && t.TargetAccountID != nil {
 		tx.Exec("UPDATE accounts SET balance = balance - ? WHERE id = ? AND user_id = ?", t.Amount+t.AdminFee, t.AccountID, userID)
 		tx.Exec("UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?", t.Amount, *t.TargetAccountID, userID)
 		incDesc := fmt.Sprintf("Transfer masuk (Ref: %s)", t.Desc)
@@ -529,7 +507,7 @@ func handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	tx, _ := db.Begin()
 	var accID int
 	var tType string
-	var amount, adminFee float64
+	var amount, adminFee int64 // DIUBAH KE int64
 
 	err := tx.QueryRow("SELECT account_id, transaction_type, amount, admin_fee FROM transactions WHERE id = ? AND user_id = ?", idStr, userID).Scan(&accID, &tType, &amount, &adminFee)
 	if err == nil {
@@ -549,7 +527,7 @@ func handleBill(w http.ResponseWriter, r *http.Request) {
 	var b Bill
 	json.NewDecoder(r.Body).Decode(&b)
 	if b.Tenor > 0 {
-		b.MonthlyAmount = b.TotalAmount / float64(b.Tenor)
+		b.MonthlyAmount = b.TotalAmount / int64(b.Tenor)
 	}
 	db.Exec("INSERT INTO bills (platform, item_name, monthly_amount, tenor, total_amount, user_id) VALUES (?, ?, ?, ?, ?, ?)", b.Platform, b.ItemName, b.MonthlyAmount, b.Tenor, b.TotalAmount, userID)
 	w.WriteHeader(http.StatusCreated)
@@ -567,7 +545,7 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&req)
 	tx, _ := db.Begin()
 	var platform, itemName string
-	var currentTotal float64
+	var currentTotal int64 // DIUBAH KE int64
 	var tenor int
 
 	err := tx.QueryRow("SELECT platform, item_name, total_amount, tenor FROM bills WHERE id = ? AND user_id = ?", req.BillID, userID).Scan(&platform, &itemName, &currentTotal, &tenor)
@@ -586,7 +564,7 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	if newTenor <= 0 || newTotal <= 0 {
 		tx.Exec("DELETE FROM bills WHERE id = ? AND user_id = ?", req.BillID, userID)
 	} else {
-		newMonthly := newTotal / float64(newTenor)
+		newMonthly := newTotal / int64(newTenor)
 		tx.Exec("UPDATE bills SET tenor = ?, total_amount = ?, monthly_amount = ? WHERE id = ? AND user_id = ?", newTenor, newTotal, newMonthly, req.BillID, userID)
 	}
 	tx.Commit()
@@ -610,14 +588,13 @@ func handleDeletePiutang(w http.ResponseWriter, r *http.Request) {
 func handleHistory(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(int)
 	
-	// Ambil parameter filter dari URL
 	startDate := r.URL.Query().Get("start")
 	endDate := r.URL.Query().Get("end")
 	querySearch := r.URL.Query().Get("q")
 
 	w.Header().Set("Content-Type", "application/json")
 	var data DashboardData
-	var totalBal, totalBill, totalPiutang float64
+	var totalBal, totalBill, totalPiutang int64 // DIUBAH KE int64
 
 	rowsAcc, err := db.Query("SELECT id, bank_name, balance FROM accounts WHERE user_id = ?", userID)
 	if err == nil {
@@ -652,7 +629,6 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		rowsPiutang.Close()
 	}
 
-	// Query Transaksi Dinamis dengan Filter Tanggal dan Pencarian Keterangan
 	sqlQuery := "SELECT t.id, a.bank_name, t.transaction_type, t.amount, t.admin_fee, t.description, DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i') FROM transactions t JOIN accounts a ON t.account_id = a.id WHERE t.user_id = ?"
 	args := []interface{}{userID}
 
